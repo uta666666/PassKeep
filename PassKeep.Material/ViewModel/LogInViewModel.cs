@@ -24,6 +24,9 @@ namespace PassKeep.Material.ViewModel {
             if (!File.Exists("passkeep")) {
                 ConfirmPasswordVisibility.Value = Visibility.Visible;
                 Message.Value = "パスワードを登録してください" + Environment.NewLine + "パスワードを忘れると復元不可能です";
+            } else {
+                ConfirmPasswordVisibility.Value = Visibility.Hidden;
+                Message.Value = string.Empty;
             }
 
             LogInCommand = new ReactiveCommand<Window>();

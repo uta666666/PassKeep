@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using MaterialDesignThemes.Wpf;
 using PassKeep.Material.Common;
 using Reactive.Bindings;
 
@@ -13,8 +14,8 @@ namespace PassKeep.Material.ViewModel {
         public ChangePasswordViewModel() {
             IsChanged = false;
 
-            ChangePasswordCommand = new ReactiveCommand<Window>();
-            ChangePasswordCommand.Subscribe((w) => {
+            ChangePasswordCommand = new ReactiveCommand();
+            ChangePasswordCommand.Subscribe(() => {
                 if (string.IsNullOrEmpty(PasswordOld) ||
                     string.IsNullOrEmpty(PasswordNew) ||
                     string.IsNullOrEmpty(PasswordNewConfirm)) {
@@ -31,27 +32,12 @@ namespace PassKeep.Material.ViewModel {
 
                 Identity.Current = PasswordNew;
                 IsChanged = true;
-                MessageBox.Show("パスワードを変更しました。");
-                SystemCommands.CloseWindow(w);
-            });
-
-            CloseWindowCommand = new ReactiveCommand<Window>();
-            CloseWindowCommand.Subscribe((w) => {
-                SystemCommands.CloseWindow(w);
-            });
-
-            MinimizeWindowCommand = new ReactiveCommand<Window>();
-            MinimizeWindowCommand.Subscribe((w) => {
-                SystemCommands.MinimizeWindow(w);
+                
+                DialogHost.CloseDialogCommand.Execute(true, null);
             });
         }
 
-
-        public ReactiveCommand<Window> CloseWindowCommand { get; set; }
-
-        public ReactiveCommand<Window> MinimizeWindowCommand { get; set; }
-
-        public ReactiveCommand<Window> ChangePasswordCommand { get; set; }
+        public ReactiveCommand ChangePasswordCommand { get; set; }
 
         public string PasswordOld { get; set; }
 

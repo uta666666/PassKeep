@@ -17,25 +17,36 @@ using System.Windows.Media.Imaging;
 using System.Drawing;
 using System.Drawing.Imaging;
 using Reactive.Bindings;
+using System.Text.RegularExpressions;
+using MaterialDesignThemes.Wpf;
 
-namespace PassKeep.Material.ViewModel {
-    public class MainViewModel : Livet.ViewModel {
-        public MainViewModel() {
+namespace PassKeep.Material.ViewModel
+{
+    public class MainViewModel : Livet.ViewModel
+    {
+        public MainViewModel()
+        {
             //Property初期化
             InitializeProperty();
 
             Password = Identity.Current;
-            
-            if (File.Exists("passkeep")) {
+
+            if (File.Exists("passkeep"))
+            {
                 var decryptStr = FileManager.ReadWithDecrypt("passkeep", Password);
                 Accounts.Value = JsonConvert.DeserializeObject<ObservableCollection<Account>>(decryptStr);
-            } else {
+            }
+            else
+            {
                 Accounts = new ReactiveProperty<ObservableCollection<Account>>(new ObservableCollection<Account>());
             }
 
+            //追加
             AddCommand = new ReactiveCommand();
-            AddCommand.Subscribe(() => {
-                if (Accounts == null) {
+            AddCommand.Subscribe(() =>
+            {
+                if (Accounts == null)
+                {
                     Accounts = new ReactiveProperty<ObservableCollection<Account>>(new ObservableCollection<Account>());
                 }
                 var newAccount = new Account();
@@ -44,46 +55,81 @@ namespace PassKeep.Material.ViewModel {
                 CurrentAccount.Value = newAccount;
             });
 
+            //削除
             DeleteCommand = new ReactiveCommand<Account>();
-            DeleteCommand.Subscribe(a => {
+            DeleteCommand.Subscribe(a =>
+            {
                 Accounts.Value.Remove(a);
             });
 
+            //保存
             SaveCommand = new ReactiveCommand();
-            SaveCommand.Subscribe(() => {
+            SaveCommand.Subscribe(() =>
+            {
                 var jsonStr = JsonConvert.SerializeObject(Accounts.Value);
                 FileManager.WriteWithEncrypt("passkeep", Password, jsonStr);
 
-                MessageBox.Show("保存しました");
+                Task.Factory.StartNew(() => MessageQueue.Enqueue("保存しました。"));
             });
 
+            //クリップボードにコピー
             CopyToClipBoardCommand = new ReactiveCommand<string>();
-            CopyToClipBoardCommand.Subscribe((str) => {
-                if (string.IsNullOrEmpty(str)) {
+            CopyToClipBoardCommand.Subscribe((str) =>
+            {
+                if (string.IsNullOrEmpty(str))
+                {
                     return;
                 }
                 Clipboard.SetText(str);
             });
 
+            //ブラウザで開く
             OpenBrowserCommand = new ReactiveCommand<Uri>();
-            OpenBrowserCommand.Subscribe((url) => {
+            OpenBrowserCommand.Subscribe((url) =>
+            {
+                if (url == null)
+                {
+                    return;
+                }
                 Process.Start(url.ToString());
             });
 
+            //パスワード変更画面を開く
+            ShowChangePasswordCommand = new ReactiveCommand();
+            ShowChangePasswordCommand.Subscribe(() =>
+            {
+                var vm = new ChangePasswordViewModel();
+                DialogVM.Value = vm;
+                IsDialogOpen.Value = true;
+            });
+
+            //Light←→Dark
+            ChangeLightDarkCommand = new ReactiveCommand<bool>();
+            ChangeLightDarkCommand.Subscribe(isDark =>
+            {
+                _isDark = isDark;
+                new ThemeHelper().SetLightDark(isDark);
+            });
+
+
+            //閉じる
             CloseWindowCommand = new ReactiveCommand<Window>();
-            CloseWindowCommand.Subscribe((w) => {
+            CloseWindowCommand.Subscribe((w) =>
+            {
                 SystemCommands.CloseWindow(w);
             });
 
             //最小化
             MinimizeWindowCommand = new ReactiveCommand<Window>();
-            MinimizeWindowCommand.Subscribe((w) => {
+            MinimizeWindowCommand.Subscribe((w) =>
+            {
                 SystemCommands.MinimizeWindow(w);
             });
 
             //復元
             RestoreWindowCommand = new ReactiveCommand<Window>();
-            RestoreWindowCommand.Subscribe((w) => {
+            RestoreWindowCommand.Subscribe((w) =>
+            {
                 SystemCommands.RestoreWindow(w);
                 VisibilityForMaximize.Value = Visibility.Visible;
                 VisibilityForRestore.Value = Visibility.Collapsed;
@@ -91,21 +137,29 @@ namespace PassKeep.Material.ViewModel {
 
             //最大化
             MaximizeWindowCommand = new ReactiveCommand<Window>();
-            MaximizeWindowCommand.Subscribe((w) => {
+            MaximizeWindowCommand.Subscribe((w) =>
+            {
                 SystemCommands.MaximizeWindow(w);
                 VisibilityForMaximize.Value = Visibility.Collapsed;
                 VisibilityForRestore.Value = Visibility.Visible;
             });
 
-            ShowChangePasswordCommand = new ReactiveCommand();
-            ShowChangePasswordCommand.Subscribe(() => {
-                using(ChangePasswordViewModel vm = new ChangePasswordViewModel()) {
-                    Messenger.Raise(new TransitionMessage(vm, "ChangePassword"));
+            //ダイアログを閉じたとき
+            IsDialogOpen.Subscribe(n =>
+            {
+                if (n) return;
 
-                    if (vm.IsChanged) {
+                var vm = DialogVM.Value as ChangePasswordViewModel;
+                if (vm != null)
+                {
+                    if (vm.IsChanged)
+                    {
                         Password = Identity.Current;
-                        var jsonStr = JsonConvert.SerializeObject(Accounts);
+
+                        var jsonStr = JsonConvert.SerializeObject(Accounts.Value);
                         FileManager.WriteWithEncrypt("passkeep", Password, jsonStr);
+
+                        Task.Factory.StartNew(() => MessageQueue.Enqueue("パスワードを変更しました。"));
                     }
                 }
             });
@@ -117,8 +171,17 @@ namespace PassKeep.Material.ViewModel {
             CurrentAccount = new ReactiveProperty<Account>();
             VisibilityForMaximize = new ReactiveProperty<Visibility>(Visibility.Visible);
             VisibilityForRestore = new ReactiveProperty<Visibility>(Visibility.Visible);
+            DialogVM = new ReactiveProperty<Livet.ViewModel>();
+            IsDialogOpen = new ReactiveProperty<bool>(false);
+
+            MessageQueue = new SnackbarMessageQueue();
         }
 
+        private bool _isDark;
+
+        /// <summary>
+        /// パスワード変更
+        /// </summary>
         public ReactiveCommand ShowChangePasswordCommand { get; set; }
 
         public ReactiveCommand AddCommand { get; set; }
@@ -130,24 +193,26 @@ namespace PassKeep.Material.ViewModel {
         public ReactiveCommand<string> CopyToClipBoardCommand { get; set; }
 
         public ReactiveCommand<Uri> OpenBrowserCommand { get; set; }
+
+        public ReactiveCommand<bool> ChangeLightDarkCommand { get; set; }
+
         /// <summary>
         /// 最小化
         /// </summary>
         public ReactiveCommand<Window> MinimizeWindowCommand { get; set; }
-
         /// <summary>
         /// 復元
         /// </summary>
         public ReactiveCommand<Window> RestoreWindowCommand { get; set; }
-
         /// <summary>
         /// 最大化
         /// </summary>
         public ReactiveCommand<Window> MaximizeWindowCommand { get; set; }
         /// <summary>
-        /// 
+        /// 閉じる
         /// </summary>
         public ReactiveCommand<Window> CloseWindowCommand { get; set; }
+
 
         internal string Password { get; set; }
 
@@ -158,5 +223,11 @@ namespace PassKeep.Material.ViewModel {
         public ReactiveProperty<Visibility> VisibilityForMaximize { get; set; }
 
         public ReactiveProperty<Visibility> VisibilityForRestore { get; set; }
+
+        public ReactiveProperty<Livet.ViewModel> DialogVM { get; set; }
+
+        public ReactiveProperty<bool> IsDialogOpen { get; set; }
+
+        public SnackbarMessageQueue MessageQueue { get; private set; }
     }
 }
