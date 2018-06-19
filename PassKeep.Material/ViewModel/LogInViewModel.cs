@@ -16,7 +16,7 @@ using System.ComponentModel;
 using System.Collections;
 
 namespace PassKeep.Material.ViewModel {
-    public class LogInViewModel : Livet.ViewModel
+    public class LogInViewModel : Livet.ViewModel, INotifyDataErrorInfo
     {
         public LogInViewModel() {
             InitializeProperty();
@@ -40,6 +40,9 @@ namespace PassKeep.Material.ViewModel {
                     if (Password == ConfirmPassword) {
                         Identity.Current = Password;
                         w.DialogResult = true;
+                        RemoveError(nameof(ConfirmPassword));
+                    } else {
+                        AddError(nameof(ConfirmPassword), "パスワードが一致しません");
                     }
                     return;
                 }
@@ -48,8 +51,10 @@ namespace PassKeep.Material.ViewModel {
                 if (!string.IsNullOrEmpty(result)) {
                     Identity.Current = Password;
                     w.DialogResult = true;
+                    RemoveError(nameof(Password));
                 } else {
-                    Message.Value = "パスワードが違います";
+                    //Message.Value = "パスワードが違います";
+                    AddError(nameof(Password), "パスワードが違います");
                 }
             });
 
@@ -64,17 +69,51 @@ namespace PassKeep.Material.ViewModel {
             });
         }
 
+        private readonly Dictionary<string, string> _currentErrors = new Dictionary<string, string>();
+
+        private void AddError(string propertyName, string error)
+        {
+            if (!_currentErrors.ContainsKey(propertyName))
+            {
+                _currentErrors[propertyName] = error;
+            }
+            OnErrorsChanged(propertyName);
+        }
+
+        private void RemoveError(string propertyName)
+        {
+            if (_currentErrors.ContainsKey(propertyName))
+            {
+                _currentErrors.Remove(propertyName);
+            }
+            OnErrorsChanged(propertyName);
+        }
+
+
         public event EventHandler<DataErrorsChangedEventArgs> ErrorsChanged;
+
+        private void OnErrorsChanged(string propertyName)
+        {
+            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
+        }        
+
+        public IEnumerable GetErrors(string propertyName)
+        {
+            if (string.IsNullOrEmpty(propertyName) ||
+               !_currentErrors.ContainsKey(propertyName))
+            {
+                return null;
+            }
+            return _currentErrors[propertyName];
+        }
+
+        public bool HasErrors => _currentErrors.Count > 0;
+
 
         private void InitializeProperty()
         {
             ConfirmPasswordVisibility = new ReactiveProperty<Visibility>(Visibility.Hidden);
             Message = new ReactiveProperty<string>();
-        }
-
-        public IEnumerable GetErrors(string propertyName)
-        {
-            throw new NotImplementedException();
         }
 
         public ReactiveCommand<Window> LogInCommand { get; set; }
@@ -92,7 +131,5 @@ namespace PassKeep.Material.ViewModel {
         public ReactiveProperty<string> Message { get; set; }
 
         public ReactiveProperty<Visibility> ConfirmPasswordVisibility { get; set; }
-
-        public bool HasErrors => false;
     }
 }

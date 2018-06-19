@@ -38,11 +38,27 @@
             <v:MessageWindow />
         </DataTemplate>
     </Window.Resources>
+    <Window.InputBindings>
+        <KeyBinding
+            Key="S"
+            Command="{Binding SaveCommand}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="W"
+            Command="{Binding CloseWindowCommand}"
+            CommandParameter="{Binding ElementName=Main}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="P"
+            Command="{Binding ShowChangePasswordCommand}"
+            Modifiers="Ctrl" />
+    </Window.InputBindings>
     <materialDesign:DialogHost
         Grid.Row="0"
         Grid.RowSpan="2"
         Grid.Column="0"
         Grid.ColumnSpan="2"
+        CloseOnClickAway="True"
         DialogContent="{Binding DialogVM.Value}"
         IsOpen="{Binding IsDialogOpen.Value}">
         <Grid>
@@ -63,17 +79,26 @@
                 <DockPanel>
                     <materialDesign:PopupBox DockPanel.Dock="Right" PlacementMode="BottomAndAlignRightEdges">
                         <StackPanel>
-                            <MenuItem Header="エクスポート">
+                            <MenuItem
+                                Header="エクスポート"
+                                InputGestureText="Ctrl+E"
+                                IsEnabled="False">
                                 <MenuItem.Icon>
                                     <materialDesign:PackIcon Kind="Export" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Command="{Binding SaveCommand}" Header="保存">
+                            <MenuItem
+                                Command="{Binding SaveCommand}"
+                                Header="保存"
+                                InputGestureText="Ctrl+S">
                                 <MenuItem.Icon>
                                     <materialDesign:PackIcon Kind="ContentSave" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Command="{Binding ShowChangePasswordCommand}" Header="パスワード変更">
+                            <MenuItem
+                                Command="{Binding ShowChangePasswordCommand}"
+                                Header="パスワード変更"
+                                InputGestureText="Ctrl+P">
                                 <MenuItem.Icon>
                                     <materialDesign:PackIcon Kind="KeyChange" />
                                 </MenuItem.Icon>
@@ -82,7 +107,8 @@
                             <MenuItem
                                 Command="{Binding CloseWindowCommand}"
                                 CommandParameter="{Binding ElementName=Main}"
-                                Header="Exit">
+                                Header="Exit"
+                                InputGestureText="Ctrl+W">
                                 <MenuItem.Icon>
                                     <materialDesign:PackIcon Kind="ExitToApp" />
                                 </MenuItem.Icon>
@@ -96,7 +122,7 @@
                         DockPanel.Dock="Right"
                         Style="{StaticResource MaterialDesignSwitchDarkToggleButton}" />
                     <StackPanel Orientation="Horizontal">
-                        <ToggleButton Style="{DynamicResource MaterialDesignHamburgerToggleButton}" />
+                        <!--<ToggleButton Style="{DynamicResource MaterialDesignHamburgerToggleButton}" />-->
                         <TextBlock
                             Margin="16,0,0,0"
                             VerticalAlignment="Center"
@@ -106,47 +132,6 @@
                     </StackPanel>
                 </DockPanel>
             </materialDesign:ColorZone>
-            <!--<Menu
-                x:Name="menu"
-                Grid.Row="0"
-                Grid.ColumnSpan="2"
-                Height="50"
-                VerticalAlignment="Top"
-                Background="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=Background}">
-                <MenuItem Header="ファイル(_F)">
-                    <MenuItem Header="エクスポート" />
-                    <MenuItem
-                        Command="{Binding SaveCommand}"
-                        Header="保存"
-                        InputGestureText="Ctrl+S">
-                        <MenuItem.Icon>
-                            <materialDesign:PackIcon Kind="ContentSave" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <Separator />
-                    <MenuItem
-                        Command="{Binding CloseWindowCommand}"
-                        CommandParameter="{Binding ElementName=Main}"
-                        Header="Exit"
-                        InputGestureText="Ctrl+E">
-                        <MenuItem.Icon>
-                            <materialDesign:PackIcon Kind="ExitToApp" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                </MenuItem>
-                <MenuItem Header="編集(_H)">
-                    <MenuItem Command="{Binding ShowChangePasswordCommand}" Header="パスワード変更">
-                        <MenuItem.Icon>
-                            <materialDesign:PackIcon Kind="KeyChange" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Header="設定">
-                        <MenuItem.Icon>
-                            <materialDesign:PackIcon Kind="Settings" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                </MenuItem>
-            </Menu>-->
             <Border
                 Grid.Row="1"
                 Margin="10,10,10,10"
@@ -207,7 +192,8 @@
             <Grid
                 Grid.Row="1"
                 Grid.Column="1"
-                Margin="0,20,0,0">
+                Margin="0,20,0,0"
+                IsEnabled="{Binding IsEditable.Value}">
                 <TextBox
                     Height="40"
                     Margin="20,10,95,0"
@@ -228,7 +214,7 @@
                     materialDesign:HintAssist.Hint="ＩＤ"
                     materialDesign:HintAssist.IsFloating="True"
                     FontSize="16"
-                    Text="{Binding CurrentAccount.Value.ID}"
+                    Text="{Binding CurrentAccount.Value.ID, UpdateSourceTrigger=PropertyChanged}"
                     TextWrapping="NoWrap" />
                 <PasswordBox
                     x:Name="textBoxPassword"
@@ -239,9 +225,18 @@
                     FontSize="16"
                     Style="{StaticResource MaterialDesignFloatingHintPasswordBox}">
                     <i:Interaction.Behaviors>
-                        <livet:PasswordBoxBindingSupportBehavior Password="{Binding CurrentAccount.Value.Password}" />
+                        <livet:PasswordBoxBindingSupportBehavior Password="{Binding CurrentAccount.Value.Password, UpdateSourceTrigger=PropertyChanged}" />
                     </i:Interaction.Behaviors>
                 </PasswordBox>
+                <TextBox
+                    Height="40"
+                    Margin="20,190,95,0"
+                    VerticalAlignment="Top"
+                    materialDesign:HintAssist.Hint="メールアドレス"
+                    materialDesign:HintAssist.IsFloating="True"
+                    FontSize="16"
+                    Text="{Binding CurrentAccount.Value.Mail, UpdateSourceTrigger=PropertyChanged}"
+                    TextWrapping="NoWrap" />
                 <TextBox
                     Height="40"
                     Margin="20,250,95,0"
@@ -249,7 +244,7 @@
                     materialDesign:HintAssist.Hint="ＵＲＬ"
                     materialDesign:HintAssist.IsFloating="True"
                     FontSize="16"
-                    Text="{Binding CurrentAccount.Value.URL}"
+                    Text="{Binding CurrentAccount.Value.URL, UpdateSourceTrigger=PropertyChanged}"
                     TextWrapping="NoWrap" />
                 <Button
                     x:Name="buttonCopy2"
@@ -311,15 +306,6 @@
                         Height="24"
                         Kind="Earth" />
                 </Button>
-                <TextBox
-                    Height="40"
-                    Margin="20,190,95,0"
-                    VerticalAlignment="Top"
-                    materialDesign:HintAssist.Hint="メールアドレス"
-                    materialDesign:HintAssist.IsFloating="True"
-                    FontSize="16"
-                    Text="{Binding CurrentAccount.Value.Mail}"
-                    TextWrapping="NoWrap" />
                 <Button
                     x:Name="buttonCopy3_Copy"
                     Width="35"

@@ -105,6 +105,8 @@ namespace PassKeep.Material.Common {
                 }
             } catch (CryptographicException) {
                 return string.Empty;
+            } catch (Exception) {
+                return string.Empty;
             }
         }
     }

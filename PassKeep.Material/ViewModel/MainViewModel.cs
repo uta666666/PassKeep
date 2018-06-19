@@ -19,6 +19,7 @@ using System.Drawing.Imaging;
 using Reactive.Bindings;
 using System.Text.RegularExpressions;
 using MaterialDesignThemes.Wpf;
+using System.Reactive.Linq;
 
 namespace PassKeep.Material.ViewModel
 {
@@ -173,6 +174,7 @@ namespace PassKeep.Material.ViewModel
             VisibilityForRestore = new ReactiveProperty<Visibility>(Visibility.Visible);
             DialogVM = new ReactiveProperty<Livet.ViewModel>();
             IsDialogOpen = new ReactiveProperty<bool>(false);
+            IsEditable = CurrentAccount.Select(n => n != null).ToReactiveProperty(); //Accounts.Select(n => (n?.Count ?? 0) > 0).ToReactiveProperty();
 
             MessageQueue = new SnackbarMessageQueue();
         }
@@ -229,5 +231,7 @@ namespace PassKeep.Material.ViewModel
         public ReactiveProperty<bool> IsDialogOpen { get; set; }
 
         public SnackbarMessageQueue MessageQueue { get; private set; }
+
+        public ReactiveProperty<bool> IsEditable { get; set; }
     }
 }

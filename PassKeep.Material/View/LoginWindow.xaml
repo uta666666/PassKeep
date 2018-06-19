@@ -45,30 +45,30 @@
                 <Grid>
                     <PasswordBox
                         x:Name="textBoxPasswordLocal"
-                        Grid.Row="1"
                         Height="50"
-                        Margin="0,200,0,0"
+                        Margin="0,210,0,0"
                         VerticalAlignment="Top"
                         materialDesign:HintAssist.FloatingOffset="0,-25"
                         materialDesign:HintAssist.Hint="パスワード"
-                        materialDesign:ValidationAssist.UsePopup="True"
+                        materialDesign:ValidationAssist.Suppress="True"
                         FontSize="20"
-                        Style="{StaticResource MaterialDesignFloatingHintPasswordBox}">
+                        Style="{StaticResource MaterialDesignFloatingHintPasswordBox}"
+                        Tag="{Binding Password, ValidatesOnNotifyDataErrors=True, Mode=OneWay}">
                         <i:Interaction.Behaviors>
                             <livet:PasswordBoxBindingSupportBehavior Password="{Binding Password}" />
                         </i:Interaction.Behaviors>
                     </PasswordBox>
                     <PasswordBox
                         x:Name="textBoxPasswordLocal_Copy"
-                        Grid.Row="1"
                         Height="50"
-                        Margin="0,265,0,0"
+                        Margin="0,270,0,0"
                         VerticalAlignment="Top"
                         materialDesign:HintAssist.FloatingOffset="0,-25"
                         materialDesign:HintAssist.Hint="パスワード（確認）"
-                        materialDesign:ValidationAssist.UsePopup="True"
+                        materialDesign:ValidationAssist.Suppress="True"
                         FontSize="20"
                         Style="{StaticResource MaterialDesignFloatingHintPasswordBox}"
+                        Tag="{Binding ConfirmPassword, ValidatesOnNotifyDataErrors=True, Mode=OneWay}"
                         Visibility="{Binding ConfirmPasswordVisibility.Value}">
                         <i:Interaction.Behaviors>
                             <livet:PasswordBoxBindingSupportBehavior Password="{Binding ConfirmPassword}" />
