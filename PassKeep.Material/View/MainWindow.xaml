@@ -1,7 +1,9 @@
-﻿<Window
+﻿<Controls:MetroWindow
     x:Class="PassKeep.Material.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+    xmlns:Dialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
     xmlns:b="clr-namespace:PassKeep.Material.View.Behavior"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
@@ -17,6 +19,7 @@
     Height="470"
     MinWidth="800"
     MinHeight="470"
+    Dialog:DialogParticipation.Register="{Binding}"
     Background="{DynamicResource MaterialDesignPaper}"
     FontFamily="{DynamicResource MaterialDesignFont}"
     TextElement.FontSize="13"
@@ -25,10 +28,14 @@
     TextOptions.TextFormattingMode="Ideal"
     TextOptions.TextRenderingMode="Auto"
     mc:Ignorable="d">
-    <Window.DataContext>
-        <vm:MainViewModel />
-    </Window.DataContext>
-    <Window.Resources>
+    <Controls:MetroWindow.DataContext>
+        <vm:MainViewModel>
+            <vm:MainViewModel.MahAppsDialogCoordinator>
+                <Dialog:DialogCoordinator />
+            </vm:MainViewModel.MahAppsDialogCoordinator>
+        </vm:MainViewModel>
+    </Controls:MetroWindow.DataContext>
+    <Controls:MetroWindow.Resources>
         <s:Boolean x:Key="True">True</s:Boolean>
         <s:Boolean x:Key="False">False</s:Boolean>
         <DataTemplate DataType="{x:Type vm:ChangePasswordViewModel}">
@@ -37,8 +44,8 @@
         <DataTemplate DataType="{x:Type vm:MessageViewModel}">
             <v:MessageWindow />
         </DataTemplate>
-    </Window.Resources>
-    <Window.InputBindings>
+    </Controls:MetroWindow.Resources>
+    <Controls:MetroWindow.InputBindings>
         <KeyBinding
             Key="S"
             Command="{Binding SaveCommand}"
@@ -52,7 +59,11 @@
             Key="P"
             Command="{Binding ShowChangePasswordCommand}"
             Modifiers="Ctrl" />
-    </Window.InputBindings>
+    </Controls:MetroWindow.InputBindings>
+    <i:Interaction.Behaviors>
+        <b:WindowDragMoveBehavior />
+        <b:WindowCloseCheckBehavior Accounts="{Binding Accounts.Value}" ShowDialogCommand="{Binding ShowDialogMahappsCommand}" />
+    </i:Interaction.Behaviors>
     <materialDesign:DialogHost
         Grid.Row="0"
         Grid.RowSpan="2"
@@ -108,7 +119,7 @@
                                 Command="{Binding CloseWindowCommand}"
                                 CommandParameter="{Binding ElementName=Main}"
                                 Header="Exit"
-                                InputGestureText="Ctrl+W">
+                                InputGestureText="Alt+F4">
                                 <MenuItem.Icon>
                                     <materialDesign:PackIcon Kind="ExitToApp" />
                                 </MenuItem.Icon>
@@ -120,6 +131,7 @@
                         Command="{Binding ChangeLightDarkCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=IsChecked}"
                         DockPanel.Dock="Right"
+                        IsChecked="{Binding IsDark.Value}"
                         Style="{StaticResource MaterialDesignSwitchDarkToggleButton}" />
                     <StackPanel Orientation="Horizontal">
                         <!--<ToggleButton Style="{DynamicResource MaterialDesignHamburgerToggleButton}" />-->
@@ -147,7 +159,7 @@
                     <ListBox
                         x:Name="titleList"
                         Grid.Row="0"
-                        FontSize="20"
+                        FontSize="18"
                         ItemsSource="{Binding Accounts.Value}"
                         SelectedItem="{Binding CurrentAccount.Value}">
                         <ListBox.ItemTemplate>
@@ -177,9 +189,9 @@
                 Grid.Row="1"
                 Width="32"
                 Height="32"
-                Margin="305,306,0,0"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
+                Margin="0,0,5,26"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
                 Command="{Binding AddCommand}"
                 FontSize="20"
                 Foreground="White"
@@ -330,4 +342,4 @@
                 MessageQueue="{Binding MessageQueue}" />
         </Grid>
     </materialDesign:DialogHost>
-</Window>
+</Controls:MetroWindow>

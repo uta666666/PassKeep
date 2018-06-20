@@ -21,6 +21,9 @@ namespace PassKeep.Material.ViewModel {
         public LogInViewModel() {
             InitializeProperty();
 
+            var isDark = Properties.Settings.Default.IsDark;
+            new ThemeHelper().SetLightDark(isDark);
+
             if (!File.Exists("passkeep")) {
                 ConfirmPasswordVisibility.Value = Visibility.Visible;
                 Message.Value = "パスワードを登録してください" + Environment.NewLine + "パスワードを忘れると復元不可能です";

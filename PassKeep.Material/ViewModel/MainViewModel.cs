@@ -20,6 +20,7 @@ using Reactive.Bindings;
 using System.Text.RegularExpressions;
 using MaterialDesignThemes.Wpf;
 using System.Reactive.Linq;
+using MahApps.Metro.Controls.Dialogs;
 
 namespace PassKeep.Material.ViewModel
 {
@@ -29,6 +30,8 @@ namespace PassKeep.Material.ViewModel
         {
             //Property初期化
             InitializeProperty();
+
+            new ThemeHelper().SetLightDark(IsDark.Value);
 
             Password = Identity.Current;
 
@@ -40,6 +43,11 @@ namespace PassKeep.Material.ViewModel
             else
             {
                 Accounts = new ReactiveProperty<ObservableCollection<Account>>(new ObservableCollection<Account>());
+            }
+
+            foreach (var a in Accounts.Value)
+            {
+                a.ResetChange();
             }
 
             //追加
@@ -69,6 +77,11 @@ namespace PassKeep.Material.ViewModel
             {
                 var jsonStr = JsonConvert.SerializeObject(Accounts.Value);
                 FileManager.WriteWithEncrypt("passkeep", Password, jsonStr);
+
+                foreach (var a in Accounts.Value)
+                {
+                    a.ResetChange();
+                }
 
                 Task.Factory.StartNew(() => MessageQueue.Enqueue("保存しました。"));
             });
@@ -108,16 +121,42 @@ namespace PassKeep.Material.ViewModel
             ChangeLightDarkCommand = new ReactiveCommand<bool>();
             ChangeLightDarkCommand.Subscribe(isDark =>
             {
-                _isDark = isDark;
                 new ThemeHelper().SetLightDark(isDark);
+
+                Properties.Settings.Default.IsDark = isDark;
+                Properties.Settings.Default.Save();
+            });
+
+            //
+            ShowDialogMahappsCommand = new ReactiveCommand();
+            var s = new MetroDialogSettings()
+            {
+                AffirmativeButtonText = "はい",
+                NegativeButtonText = "いいえ"
+            };
+            ShowDialogMahappsCommand.Subscribe(async w =>
+            {
+                var result = await MahAppsDialogCoordinator.ShowMessageAsync(this, "保存されていない変更があります。", "保存しますか？", MessageDialogStyle.AffirmativeAndNegative, s);
+                if (result == MessageDialogResult.Affirmative)
+                {
+                    SaveCommand.Execute();
+                }
+                else
+                {
+                    foreach (var a in Accounts.Value)
+                    {
+                        a.ResetChange();
+                    }
+                }
+                (w as MahApps.Metro.Controls.MetroWindow)?.Close();
             });
 
 
             //閉じる
-            CloseWindowCommand = new ReactiveCommand<Window>();
+            CloseWindowCommand = new ReactiveCommand<MahApps.Metro.Controls.MetroWindow>();
             CloseWindowCommand.Subscribe((w) =>
             {
-                SystemCommands.CloseWindow(w);
+                w.Close();
             });
 
             //最小化
@@ -175,11 +214,11 @@ namespace PassKeep.Material.ViewModel
             DialogVM = new ReactiveProperty<Livet.ViewModel>();
             IsDialogOpen = new ReactiveProperty<bool>(false);
             IsEditable = CurrentAccount.Select(n => n != null).ToReactiveProperty(); //Accounts.Select(n => (n?.Count ?? 0) > 0).ToReactiveProperty();
+            IsDark = new ReactiveProperty<bool>(Properties.Settings.Default.IsDark);
 
             MessageQueue = new SnackbarMessageQueue();
         }
 
-        private bool _isDark;
 
         /// <summary>
         /// パスワード変更
@@ -213,7 +252,11 @@ namespace PassKeep.Material.ViewModel
         /// <summary>
         /// 閉じる
         /// </summary>
-        public ReactiveCommand<Window> CloseWindowCommand { get; set; }
+        public ReactiveCommand<MahApps.Metro.Controls.MetroWindow> CloseWindowCommand { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public ReactiveCommand ShowDialogMahappsCommand { get; set; }
 
 
         internal string Password { get; set; }
@@ -233,5 +276,9 @@ namespace PassKeep.Material.ViewModel
         public SnackbarMessageQueue MessageQueue { get; private set; }
 
         public ReactiveProperty<bool> IsEditable { get; set; }
+
+        public ReactiveProperty<bool> IsDark { get; set; }
+
+        public IDialogCoordinator MahAppsDialogCoordinator { get; set; }
     }
 }
