@@ -63,7 +63,7 @@
     <i:Interaction.Behaviors>
         <b:WindowDragMoveBehavior />
         <b:WindowCloseCheckBehavior HasChanges="{Binding HasChanges.Value, Mode=OneWay}" ShowDialogCommand="{Binding ShowDialogMahappsCommand}" />
-        <b:WindowLoadBehavior IsDark="{Binding IsDark.Value, Mode=OneWay}" />
+        <b:WindowLoadBehavior HasChanges="{Binding HasChanges.Value, Mode=TwoWay}" IsDark="{Binding IsDark.Value, Mode=OneWay}" />
     </i:Interaction.Behaviors>
     <materialDesign:DialogHost
         Grid.Row="0"
@@ -139,6 +139,7 @@
                         <TextBlock
                             Margin="16,0,0,0"
                             VerticalAlignment="Center"
+                            Foreground="{Binding TitleBrush.Value}"
                             Style="{StaticResource MaterialDesignTitleTextBlock}">
                             PassKeep
                         </TextBlock>

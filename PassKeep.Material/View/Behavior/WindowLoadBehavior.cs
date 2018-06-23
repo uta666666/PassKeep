@@ -21,8 +21,21 @@ namespace PassKeep.Material.View.Behavior
             }
         }
 
+        public bool HasChanges {
+            get {
+                return (bool)GetValue(HasChangesProperty);
+            }
+            set {
+                SetValue(HasChangesProperty, value);
+            }
+        }
+
         public static readonly DependencyProperty IsDarkProperty
             = DependencyProperty.Register(nameof(IsDark), typeof(bool), typeof(WindowLoadBehavior), new PropertyMetadata(null));
+
+        public static readonly DependencyProperty HasChangesProperty
+            = DependencyProperty.Register(nameof(HasChanges), typeof(bool), typeof(WindowLoadBehavior), new PropertyMetadata(false));
+
 
         protected override void OnAttached()
         {
@@ -39,6 +52,8 @@ namespace PassKeep.Material.View.Behavior
         private void AssociatedObject_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
             new ThemeHelper().SetLightDark(IsDark);
+
+            HasChanges = false;
         }
     }
 }

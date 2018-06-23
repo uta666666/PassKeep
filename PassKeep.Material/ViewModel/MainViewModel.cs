@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Input;
-using Livet.Messaging;
-using Microsoft.Win32;
 using Newtonsoft.Json;
 using PassKeep.Material.Common;
 using PassKeep.Material.Model;
@@ -13,14 +8,13 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Diagnostics;
 using System.IO;
-using System.Windows.Media.Imaging;
-using System.Drawing;
-using System.Drawing.Imaging;
 using Reactive.Bindings;
-using System.Text.RegularExpressions;
 using MaterialDesignThemes.Wpf;
 using System.Reactive.Linq;
 using MahApps.Metro.Controls.Dialogs;
+using System.Windows.Media;
+using System.Collections.Specialized;
+using System.ComponentModel;
 
 namespace PassKeep.Material.ViewModel
 {
@@ -29,26 +23,7 @@ namespace PassKeep.Material.ViewModel
         public MainViewModel()
         {
             //Property初期化
-            InitializeProperty();
-
-            Password = Identity.Current;
-
-            if (File.Exists("passkeep"))
-            {
-                var decryptStr = FileManager.ReadWithDecrypt("passkeep", Password);
-                Accounts.Value = JsonConvert.DeserializeObject<ObservableCollection<Account>>(decryptStr);
-            }
-            else
-            {
-                Accounts = new ReactiveProperty<ObservableCollection<Account>>(new ObservableCollection<Account>());
-            }
-            Accounts.PropertyChanged += (sender, e) => {
-                if (e.PropertyName.Equals("Value", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return;
-                }
-                HasChanges.Value = true;
-            };
+            InitializeProperty();            
 
             //追加
             AddCommand = new ReactiveCommand();
@@ -218,8 +193,64 @@ namespace PassKeep.Material.ViewModel
             IsEditable = CurrentAccount.Select(n => n != null).ToReactiveProperty(); //Accounts.Select(n => (n?.Count ?? 0) > 0).ToReactiveProperty();
             IsDark = new ReactiveProperty<bool>(Properties.Settings.Default.IsDark);
             HasChanges = new ReactiveProperty<bool>(false);
+            TitleBrush = new ReactiveProperty<SolidColorBrush>();
+
+            //変更がある場合は文字の色を変える
+            HasChanges.Subscribe(n =>
+            {
+                if (n)
+                {
+                    TitleBrush.Value = (SolidColorBrush)Application.Current.Resources["SecondaryAccentBrush"];
+                }
+                else
+                {
+                    TitleBrush.Value = (SolidColorBrush)Application.Current.Resources["PrimaryHueDarkForegroundBrush"];
+                }
+            });
 
             MessageQueue = new SnackbarMessageQueue();
+
+            Password = Identity.Current;
+
+            if (File.Exists("passkeep"))
+            {
+                var decryptStr = FileManager.ReadWithDecrypt("passkeep", Password);
+                Accounts.Value = JsonConvert.DeserializeObject<ObservableCollection<Account>>(decryptStr);
+            }
+            else
+            {
+                Accounts = new ReactiveProperty<ObservableCollection<Account>>(new ObservableCollection<Account>());
+            }
+            //各要素に対してイベントハンドラをセット
+            foreach (var ac in Accounts.Value)
+            {
+                ac.PropertyChanged += Account_PropertyChanged;
+            }
+            //リストに対してイベントハンドラをセット
+            Accounts.Value.CollectionChanged += Accounts_CollectionChanged;
+        }
+
+        private void Accounts_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == NotifyCollectionChangedAction.Add)
+            {
+                foreach (Account item in e.NewItems)
+                {
+                    item.PropertyChanged += Account_PropertyChanged;
+                }
+            }
+            else if (e.Action == NotifyCollectionChangedAction.Remove)
+            {
+                foreach (Account item in e.OldItems)
+                {
+                    item.PropertyChanged -= Account_PropertyChanged;
+                }
+            }
+        }
+
+        private void Account_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            HasChanges.Value = true;
         }
 
         /// <summary>
@@ -227,16 +258,34 @@ namespace PassKeep.Material.ViewModel
         /// </summary>
         public ReactiveCommand ShowChangePasswordCommand { get; set; }
 
+        /// <summary>
+        /// 追加
+        /// </summary>
         public ReactiveCommand AddCommand { get; set; }
 
+        /// <summary>
+        /// 削除
+        /// </summary>
         public ReactiveCommand<Account> DeleteCommand { get; set; }
 
+        /// <summary>
+        /// 保存
+        /// </summary>
         public ReactiveCommand SaveCommand { get; set; }
 
+        /// <summary>
+        /// クリップボードにコピー
+        /// </summary>
         public ReactiveCommand<string> CopyToClipBoardCommand { get; set; }
 
+        /// <summary>
+        /// ブラウザで開く
+        /// </summary>
         public ReactiveCommand<Uri> OpenBrowserCommand { get; set; }
 
+        /// <summary>
+        /// テーマ変更
+        /// </summary>
         public ReactiveCommand<bool> ChangeLightDarkCommand { get; set; }
 
         /// <summary>
@@ -260,7 +309,9 @@ namespace PassKeep.Material.ViewModel
         /// </summary>
         public ReactiveCommand ShowDialogMahappsCommand { get; set; }
 
-
+        /// <summary>
+        /// パスワード
+        /// </summary>
         internal string Password { get; set; }
 
         public ReactiveProperty<ObservableCollection<Account>> Accounts { get; set; }
@@ -284,5 +335,7 @@ namespace PassKeep.Material.ViewModel
         public IDialogCoordinator MahAppsDialogCoordinator { get; set; }
 
         public ReactiveProperty<bool> HasChanges { get; set; }
+
+        public ReactiveProperty<SolidColorBrush> TitleBrush { get; set; }
     }
 }

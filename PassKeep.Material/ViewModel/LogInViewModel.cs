@@ -21,8 +21,11 @@ namespace PassKeep.Material.ViewModel {
         public LogInViewModel() {
             InitializeProperty();
 
-            var isDark = Properties.Settings.Default.IsDark;
-            new ThemeHelper().SetLightDark(isDark);
+            if (LicenseManager.UsageMode != LicenseUsageMode.Designtime)
+            {
+                var isDark = Properties.Settings.Default.IsDark;
+                new ThemeHelper().SetLightDark(isDark);
+            }
 
             if (!File.Exists("passkeep")) {
                 ConfirmPasswordVisibility.Value = Visibility.Visible;
