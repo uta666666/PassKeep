@@ -62,7 +62,8 @@
     </Controls:MetroWindow.InputBindings>
     <i:Interaction.Behaviors>
         <b:WindowDragMoveBehavior />
-        <b:WindowCloseCheckBehavior Accounts="{Binding Accounts.Value}" ShowDialogCommand="{Binding ShowDialogMahappsCommand}" />
+        <b:WindowCloseCheckBehavior HasChanges="{Binding HasChanges.Value, Mode=OneWay}" ShowDialogCommand="{Binding ShowDialogMahappsCommand}" />
+        <b:WindowLoadBehavior IsDark="{Binding IsDark.Value, Mode=OneWay}" />
     </i:Interaction.Behaviors>
     <materialDesign:DialogHost
         Grid.Row="0"

@@ -117,6 +117,7 @@
     <Compile Include="View\Behavior\ListBoxItemSelectedBehavior.cs" />
     <Compile Include="View\Behavior\WindowCloseCheckBehavior.cs" />
     <Compile Include="View\Behavior\WindowDragMoveBehavior.cs" />
+    <Compile Include="View\Behavior\WindowLoadBehavior.cs" />
     <Compile Include="View\MessageWindow.xaml.cs">
       <DependentUpon>MessageWindow.xaml</DependentUpon>
     </Compile>

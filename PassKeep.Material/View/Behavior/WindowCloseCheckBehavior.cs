@@ -14,12 +14,12 @@ namespace PassKeep.Material.View.Behavior
 {
     public class WindowCloseCheckBehavior : Behavior<MetroWindow>
     {
-        public ObservableCollection<Account> Accounts {
+        public bool HasChanges {
             get {
-                return (ObservableCollection<Account>)GetValue(AccountsProperty);
+                return (bool)GetValue(HasChangesProperty);
             }
             set {
-                SetValue(AccountsProperty, value);
+                SetValue(HasChangesProperty, value);
             }
         }
 
@@ -32,8 +32,8 @@ namespace PassKeep.Material.View.Behavior
             }
         }
 
-        public static readonly DependencyProperty AccountsProperty
-            = DependencyProperty.Register(nameof(Accounts), typeof(ObservableCollection<Account>), typeof(WindowCloseCheckBehavior), new PropertyMetadata(null));
+        public static readonly DependencyProperty HasChangesProperty
+            = DependencyProperty.Register(nameof(HasChanges), typeof(bool), typeof(WindowCloseCheckBehavior), new PropertyMetadata(false));
 
         public static readonly DependencyProperty ShowDialogCommandProperty
             = DependencyProperty.Register(nameof(ShowDialogCommand), typeof(ReactiveCommand), typeof(WindowCloseCheckBehavior), new PropertyMetadata(null));
@@ -52,7 +52,7 @@ namespace PassKeep.Material.View.Behavior
 
         private void AssociatedObject_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (Accounts.Any(a => a.HasChange()))
+            if (HasChanges)
             {
                 ShowDialogCommand?.Execute(AssociatedObject);
                 e.Cancel = true;

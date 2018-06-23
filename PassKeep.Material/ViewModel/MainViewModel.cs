@@ -31,8 +31,6 @@ namespace PassKeep.Material.ViewModel
             //Property初期化
             InitializeProperty();
 
-            new ThemeHelper().SetLightDark(IsDark.Value);
-
             Password = Identity.Current;
 
             if (File.Exists("passkeep"))
@@ -44,11 +42,13 @@ namespace PassKeep.Material.ViewModel
             {
                 Accounts = new ReactiveProperty<ObservableCollection<Account>>(new ObservableCollection<Account>());
             }
-
-            foreach (var a in Accounts.Value)
-            {
-                a.ResetChange();
-            }
+            Accounts.PropertyChanged += (sender, e) => {
+                if (e.PropertyName.Equals("Value", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return;
+                }
+                HasChanges.Value = true;
+            };
 
             //追加
             AddCommand = new ReactiveCommand();
@@ -69,6 +69,8 @@ namespace PassKeep.Material.ViewModel
             DeleteCommand.Subscribe(a =>
             {
                 Accounts.Value.Remove(a);
+
+                HasChanges.Value = true;
             });
 
             //保存
@@ -78,10 +80,7 @@ namespace PassKeep.Material.ViewModel
                 var jsonStr = JsonConvert.SerializeObject(Accounts.Value);
                 FileManager.WriteWithEncrypt("passkeep", Password, jsonStr);
 
-                foreach (var a in Accounts.Value)
-                {
-                    a.ResetChange();
-                }
+                HasChanges.Value = false;
 
                 Task.Factory.StartNew(() => MessageQueue.Enqueue("保存しました。"));
             });
@@ -132,21 +131,24 @@ namespace PassKeep.Material.ViewModel
             var s = new MetroDialogSettings()
             {
                 AffirmativeButtonText = "はい",
-                NegativeButtonText = "いいえ"
+                NegativeButtonText = "いいえ",
+                FirstAuxiliaryButtonText = "キャンセル",
+                DialogTitleFontSize = 20,
+                DialogResultOnCancel = MessageDialogResult.FirstAuxiliary
             };
             ShowDialogMahappsCommand.Subscribe(async w =>
             {
-                var result = await MahAppsDialogCoordinator.ShowMessageAsync(this, "保存されていない変更があります。", "保存しますか？", MessageDialogStyle.AffirmativeAndNegative, s);
+                HasChanges.Value = false;
+
+                var result = await MahAppsDialogCoordinator.ShowMessageAsync(this, "保存されていない変更があります。", "保存しますか？", MessageDialogStyle.AffirmativeAndNegativeAndSingleAuxiliary, s);
                 if (result == MessageDialogResult.Affirmative)
                 {
                     SaveCommand.Execute();
                 }
-                else
+                else if (result == MessageDialogResult.FirstAuxiliary)
                 {
-                    foreach (var a in Accounts.Value)
-                    {
-                        a.ResetChange();
-                    }
+                    HasChanges.Value = true;
+                    return;
                 }
                 (w as MahApps.Metro.Controls.MetroWindow)?.Close();
             });
@@ -215,10 +217,10 @@ namespace PassKeep.Material.ViewModel
             IsDialogOpen = new ReactiveProperty<bool>(false);
             IsEditable = CurrentAccount.Select(n => n != null).ToReactiveProperty(); //Accounts.Select(n => (n?.Count ?? 0) > 0).ToReactiveProperty();
             IsDark = new ReactiveProperty<bool>(Properties.Settings.Default.IsDark);
+            HasChanges = new ReactiveProperty<bool>(false);
 
             MessageQueue = new SnackbarMessageQueue();
         }
-
 
         /// <summary>
         /// パスワード変更
@@ -280,5 +282,7 @@ namespace PassKeep.Material.ViewModel
         public ReactiveProperty<bool> IsDark { get; set; }
 
         public IDialogCoordinator MahAppsDialogCoordinator { get; set; }
+
+        public ReactiveProperty<bool> HasChanges { get; set; }
     }
 }

@@ -1,13 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace PassKeep.Material.Model {
-    public class Account {
-        private bool _hasChange;
+    public class Account : INotifyPropertyChanged {
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
         private string _title = string.Empty;
         public string Title {
@@ -20,7 +27,7 @@ namespace PassKeep.Material.Model {
                     return;
                 }
                 _title = value;
-                _hasChange = true;
+                OnPropertyChanged(nameof(Title));
             }
         }
 
@@ -35,7 +42,7 @@ namespace PassKeep.Material.Model {
                     return;
                 }
                 _id = value;
-                _hasChange = true;
+                OnPropertyChanged(nameof(ID));
             }
         }
 
@@ -50,7 +57,7 @@ namespace PassKeep.Material.Model {
                     return;
                 }
                 _password = value;
-                _hasChange = true;
+                OnPropertyChanged(nameof(Password));
             }
         }
 
@@ -65,8 +72,7 @@ namespace PassKeep.Material.Model {
                     return;
                 }
                 _url = value;
-                _hasChange = true;
-
+                OnPropertyChanged(nameof(URL));
             }
         }
 
@@ -81,18 +87,8 @@ namespace PassKeep.Material.Model {
                     return;
                 }
                 _mail = value;
-                _hasChange = true;
+                OnPropertyChanged(nameof(Mail));
             }
-        }
-
-        public bool HasChange()
-        {
-            return _hasChange;
-        }
-
-        public void ResetChange()
-        {
-            _hasChange = false;
         }
     }
 }
