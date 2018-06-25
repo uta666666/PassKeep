@@ -133,6 +133,15 @@ namespace PassKeep.Material.ViewModel
             CloseWindowCommand = new ReactiveCommand<MahApps.Metro.Controls.MetroWindow>();
             CloseWindowCommand.Subscribe((w) =>
             {
+                IsLogout = false;
+                w.Close();
+            });
+
+            //ログアウト
+            LogoutCommand = new ReactiveCommand<MahApps.Metro.Controls.MetroWindow>();
+            LogoutCommand.Subscribe((w) =>
+            {
+                IsLogout = true;
                 w.Close();
             });
 
@@ -305,6 +314,10 @@ namespace PassKeep.Material.ViewModel
         /// </summary>
         public ReactiveCommand<MahApps.Metro.Controls.MetroWindow> CloseWindowCommand { get; set; }
         /// <summary>
+        /// Logout
+        /// </summary>
+        public ReactiveCommand<MahApps.Metro.Controls.MetroWindow> LogoutCommand { get; set; }
+        /// <summary>
         /// 
         /// </summary>
         public ReactiveCommand ShowDialogMahappsCommand { get; set; }
@@ -337,5 +350,7 @@ namespace PassKeep.Material.ViewModel
         public ReactiveProperty<bool> HasChanges { get; set; }
 
         public ReactiveProperty<SolidColorBrush> TitleBrush { get; set; }
+
+        public bool IsLogout { get; set; }
     }
 }

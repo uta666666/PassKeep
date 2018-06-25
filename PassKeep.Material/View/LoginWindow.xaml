@@ -39,74 +39,58 @@
     </i:Interaction.Behaviors>
     <Grid FocusManager.FocusedElement="{Binding ElementName=textBoxPasswordLocal}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="30" />
+            <RowDefinition Height="200" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
+        <materialDesign:ColorZone Mode="PrimaryDark">
+            <Image
+                Grid.Row="0"
+                Width="224"
+                Margin="250,10,250,20"
+                Source="../Resources/Images/key.png" />
+        </materialDesign:ColorZone>
         <Border Grid.Row="1" Margin="250,0,250,0">
-            <materialDesign:ColorZone>
-                <Grid>
-                    <PasswordBox
-                        x:Name="textBoxPasswordLocal"
-                        Height="50"
-                        Margin="0,210,0,0"
-                        VerticalAlignment="Top"
-                        materialDesign:HintAssist.FloatingOffset="0,-25"
-                        materialDesign:HintAssist.Hint="パスワード"
-                        materialDesign:ValidationAssist.Suppress="True"
-                        FontSize="20"
-                        Style="{StaticResource MaterialDesignFloatingHintPasswordBox}"
-                        Tag="{Binding Password, ValidatesOnNotifyDataErrors=True, Mode=OneWay}">
-                        <i:Interaction.Behaviors>
-                            <livet:PasswordBoxBindingSupportBehavior Password="{Binding Password}" />
-                        </i:Interaction.Behaviors>
-                    </PasswordBox>
-                    <PasswordBox
-                        x:Name="textBoxPasswordLocal_Copy"
-                        Height="50"
-                        Margin="0,270,0,0"
-                        VerticalAlignment="Top"
-                        materialDesign:HintAssist.FloatingOffset="0,-25"
-                        materialDesign:HintAssist.Hint="パスワード（確認）"
-                        materialDesign:ValidationAssist.Suppress="True"
-                        FontSize="20"
-                        Style="{StaticResource MaterialDesignFloatingHintPasswordBox}"
-                        Tag="{Binding ConfirmPassword, ValidatesOnNotifyDataErrors=True, Mode=OneWay}"
-                        Visibility="{Binding ConfirmPasswordVisibility.Value}">
-                        <i:Interaction.Behaviors>
-                            <livet:PasswordBoxBindingSupportBehavior Password="{Binding ConfirmPassword}" />
-                        </i:Interaction.Behaviors>
-                    </PasswordBox>
-                    <!--<Button x:Name="button"
-                Width="73"
-                Height="20"
-                Margin="0,237,110,0"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Command="{Binding LogInCommand}"
-                CommandParameter="{Binding ElementName=Login}"
-                Content="ログイン">
-        </Button>-->
-                    <materialDesign:Card
-                        Grid.Row="1"
-                        Width="280"
-                        Height="175">
-                        <Image
-                            x:Name="image"
-                            Grid.Row="1"
-                            Margin="5,10,5,10"
-                            Source="../Resources/Images/key.png" />
-                    </materialDesign:Card>
-                    <TextBlock
-                        x:Name="textBlock"
-                        Grid.Row="1"
-                        Margin="0,338,0,0"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Top"
-                        Style="{StaticResource MaterialDesignBody1TextBlock}"
-                        Text="{Binding Message.Value}"
-                        TextWrapping="Wrap" />
-                </Grid>
-            </materialDesign:ColorZone>
+            <Grid>
+                <PasswordBox
+                    x:Name="textBoxPasswordLocal"
+                    Height="50"
+                    Margin="0,30,0,0"
+                    VerticalAlignment="Top"
+                    materialDesign:HintAssist.FloatingOffset="0,-25"
+                    materialDesign:HintAssist.Hint="パスワード"
+                    materialDesign:ValidationAssist.Suppress="True"
+                    FontSize="20"
+                    Style="{StaticResource MaterialDesignFloatingHintPasswordBox}"
+                    Tag="{Binding Password, ValidatesOnNotifyDataErrors=True, Mode=OneWay}">
+                    <i:Interaction.Behaviors>
+                        <livet:PasswordBoxBindingSupportBehavior Password="{Binding Password}" />
+                    </i:Interaction.Behaviors>
+                </PasswordBox>
+                <PasswordBox
+                    x:Name="textBoxPasswordLocal_Copy"
+                    Height="50"
+                    Margin="0,90,0,0"
+                    VerticalAlignment="Top"
+                    materialDesign:HintAssist.FloatingOffset="0,-25"
+                    materialDesign:HintAssist.Hint="パスワード（確認）"
+                    materialDesign:ValidationAssist.Suppress="True"
+                    FontSize="20"
+                    Style="{StaticResource MaterialDesignFloatingHintPasswordBox}"
+                    Tag="{Binding ConfirmPassword, ValidatesOnNotifyDataErrors=True, Mode=OneWay}"
+                    Visibility="{Binding ConfirmPasswordVisibility.Value}">
+                    <i:Interaction.Behaviors>
+                        <livet:PasswordBoxBindingSupportBehavior Password="{Binding ConfirmPassword}" />
+                    </i:Interaction.Behaviors>
+                </PasswordBox>
+                <TextBlock
+                    x:Name="textBlock"
+                    Margin="0,0,0,20"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Bottom"
+                    Style="{StaticResource MaterialDesignBody1TextBlock}"
+                    Text="{Binding Message.Value}"
+                    TextWrapping="Wrap" />
+            </Grid>
         </Border>
     </Grid>
 </Controls:MetroWindow>

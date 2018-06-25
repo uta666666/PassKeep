@@ -114,6 +114,7 @@
     <Compile Include="ViewModel\LogInViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\MessageViewModel.cs" />
+    <Compile Include="View\Behavior\ForceLogoutBehavior.cs" />
     <Compile Include="View\Behavior\ListBoxItemSelectedBehavior.cs" />
     <Compile Include="View\Behavior\WindowCloseCheckBehavior.cs" />
     <Compile Include="View\Behavior\WindowDragMoveBehavior.cs" />

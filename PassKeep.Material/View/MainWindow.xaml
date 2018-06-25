@@ -59,11 +59,17 @@
             Key="P"
             Command="{Binding ShowChangePasswordCommand}"
             Modifiers="Ctrl" />
+        <KeyBinding
+            Key="L"
+            Command="{Binding LogoutCommand}"
+            CommandParameter="{Binding ElementName=Main}"
+            Modifiers="Ctrl" />
     </Controls:MetroWindow.InputBindings>
     <i:Interaction.Behaviors>
         <b:WindowDragMoveBehavior />
         <b:WindowCloseCheckBehavior HasChanges="{Binding HasChanges.Value, Mode=OneWay}" ShowDialogCommand="{Binding ShowDialogMahappsCommand}" />
         <b:WindowLoadBehavior HasChanges="{Binding HasChanges.Value, Mode=TwoWay}" IsDark="{Binding IsDark.Value, Mode=OneWay}" />
+        <b:ForceLogoutBehavior LogoutCommand="{Binding LogoutCommand}" />
     </i:Interaction.Behaviors>
     <materialDesign:DialogHost
         Grid.Row="0"
@@ -117,10 +123,10 @@
                             </MenuItem>
                             <Separator />
                             <MenuItem
-                                Command="{Binding CloseWindowCommand}"
+                                Command="{Binding LogoutCommand}"
                                 CommandParameter="{Binding ElementName=Main}"
-                                Header="Exit"
-                                InputGestureText="Alt+F4">
+                                Header="ログアウト"
+                                InputGestureText="Ctrl+L">
                                 <MenuItem.Icon>
                                     <materialDesign:PackIcon Kind="ExitToApp" />
                                 </MenuItem.Icon>
