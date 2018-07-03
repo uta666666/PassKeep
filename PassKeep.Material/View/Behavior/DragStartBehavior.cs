@@ -20,21 +20,7 @@ namespace PassKeep.Material.View.Behavior
             set { SetValue(IsAttachedProperty, value); }
         }
 
-        public DragDropEffects AllowedEffects {
-            get { return (DragDropEffects)GetValue(AllowedEffectsProperty); }
-            set { SetValue(AllowedEffectsProperty, value); }
-        }
-
-        public object DragDropData {
-            get { return GetValue(DragDropDataProperty); }
-            set { SetValue(DragDropDataProperty, value); }
-        }
-
         public static readonly DependencyProperty IsAttachedProperty = DependencyProperty.RegisterAttached(nameof(IsAttached), typeof(bool), typeof(DragStartBehavior), new FrameworkPropertyMetadata(false, OnIsAttachedChanged));
-
-        public static readonly DependencyProperty AllowedEffectsProperty = DependencyProperty.Register(nameof(AllowedEffects), typeof(DragDropEffects), typeof(DragStartBehavior), new UIPropertyMetadata(DragDropEffects.All));
-        public static readonly DependencyProperty DragDropDataProperty = DependencyProperty.Register(nameof(DragDropData), typeof(object), typeof(DragStartBehavior), new PropertyMetadata(null));
-
 
         private static void OnIsAttachedChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
         {

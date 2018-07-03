@@ -28,6 +28,9 @@ namespace PassKeep.Material
 
                 //MainWindow mainWindow = new MainWindow();
                 _mainWindow = new MainWindow();
+                _mainWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                _mainWindow.Top = loginWindow.Top;
+                _mainWindow.Left = loginWindow.Left;
                 _mainWindow.Closing += _mainWindow_Closing;
                 _mainWindow.Show();
             }
@@ -43,12 +46,17 @@ namespace PassKeep.Material
             if (isLogout)
             {
                 e.Cancel = true;
-                (sender as MainWindow).Visibility = Visibility.Hidden;
+                _mainWindow.Visibility = Visibility.Hidden;
 
                 LoginWindow loginWindow = new LoginWindow();
+                loginWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                loginWindow.Top = _mainWindow.Top;
+                loginWindow.Left = _mainWindow.Left;
                 if (loginWindow.ShowDialog() ?? false)
                 {
-                    ((sender as MainWindow).DataContext as MainViewModel).IsLogout = false;
+                    (_mainWindow.DataContext as MainViewModel).IsLogout = false;
+                    _mainWindow.Top = loginWindow.Top;
+                    _mainWindow.Left = loginWindow.Left;
                     _mainWindow.Visibility = Visibility.Visible;
                 }
                 else
