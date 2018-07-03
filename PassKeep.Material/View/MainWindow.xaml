@@ -167,9 +167,18 @@
                     <ListBox
                         x:Name="titleList"
                         Grid.Row="0"
-                        FontSize="18"
+                        AllowDrop="True"
+                        FontSize="16"
                         ItemsSource="{Binding Accounts.Value}"
                         SelectedItem="{Binding CurrentAccount.Value}">
+                        <i:Interaction.Behaviors>
+                            <b:DragAcceptBehavior Description="{Binding Description}" />
+                        </i:Interaction.Behaviors>
+                        <ListBox.ItemContainerStyle>
+                            <Style BasedOn="{StaticResource {x:Type ListBoxItem}}" TargetType="{x:Type ListBoxItem}">
+                                <Setter Property="b:DragStartBehavior.IsAttached" Value="True" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel>

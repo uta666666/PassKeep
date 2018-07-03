@@ -31,7 +31,7 @@ namespace PassKeep.Material.ViewModel
             {
                 if (Accounts == null)
                 {
-                    Accounts = new ReactiveProperty<ObservableCollection<Account>>(new ObservableCollection<Account>());
+                    Accounts = new ReactiveProperty<AccountList>(new AccountList());
                 }
                 var newAccount = new Account();
                 Accounts.Value.Add(newAccount);
@@ -44,8 +44,6 @@ namespace PassKeep.Material.ViewModel
             DeleteCommand.Subscribe(a =>
             {
                 Accounts.Value.Remove(a);
-
-                HasChanges.Value = true;
             });
 
             //保存
@@ -191,9 +189,11 @@ namespace PassKeep.Material.ViewModel
             });
         }
 
+        /// <summary>
+        /// プロパティ初期化
+        /// </summary>
         private void InitializeProperty()
         {
-            Accounts = new ReactiveProperty<ObservableCollection<Account>>();
             CurrentAccount = new ReactiveProperty<Account>();
             VisibilityForMaximize = new ReactiveProperty<Visibility>(Visibility.Visible);
             VisibilityForRestore = new ReactiveProperty<Visibility>(Visibility.Visible);
@@ -203,6 +203,10 @@ namespace PassKeep.Material.ViewModel
             IsDark = new ReactiveProperty<bool>(Properties.Settings.Default.IsDark);
             HasChanges = new ReactiveProperty<bool>(false);
             TitleBrush = new ReactiveProperty<SolidColorBrush>();
+            MessageQueue = new SnackbarMessageQueue();
+
+            //ドラッグでの並べ替え対応
+            Description = CreateDragAcceptDescription();
 
             //変更がある場合は文字の色を変える
             HasChanges.Subscribe(n =>
@@ -217,28 +221,62 @@ namespace PassKeep.Material.ViewModel
                 }
             });
 
-            MessageQueue = new SnackbarMessageQueue();
-
+            //設定読み込みとか
             Password = Identity.Current;
+            Accounts = new ReactiveProperty<AccountList>(CreateAccountList());
+        }
 
+        /// <summary>
+        /// ListBoxの並び替え用コントロール作成
+        /// </summary>
+        /// <returns></returns>
+        private DragAcceptDescription CreateDragAcceptDescription()
+        {
+            var description = new DragAcceptDescription();
+            description.DragOver += (e) => {
+                if (e.AllowedEffects.HasFlag(e.Effects))
+                {
+                    if (e.Data.GetDataPresent(typeof(Account)))
+                    {
+                        return;
+                    }
+                }
+                e.Effects = DragDropEffects.None;
+            };
+            description.DragDrop += (e) => {
+                var oldIndex = Accounts.Value.Select((data, index) => new { Index = index, Data = data }).Where(n => n.Data == e.MovingData).Select(n => n.Index).First();
+                Accounts.Value.Move(oldIndex, e.NewIndex);
+            };
+            return description;
+        }
+
+        /// <summary>
+        /// データ読み込み
+        /// </summary>
+        /// <returns></returns>
+        private AccountList CreateAccountList()
+        {
+            var accounts = new AccountList();
             if (File.Exists("passkeep"))
             {
                 var decryptStr = FileManager.ReadWithDecrypt("passkeep", Password);
-                Accounts.Value = JsonConvert.DeserializeObject<ObservableCollection<Account>>(decryptStr);
-            }
-            else
-            {
-                Accounts = new ReactiveProperty<ObservableCollection<Account>>(new ObservableCollection<Account>());
+                accounts = JsonConvert.DeserializeObject<AccountList>(decryptStr);
             }
             //各要素に対してイベントハンドラをセット
-            foreach (var ac in Accounts.Value)
+            foreach (var ac in accounts)
             {
                 ac.PropertyChanged += Account_PropertyChanged;
             }
             //リストに対してイベントハンドラをセット
-            Accounts.Value.CollectionChanged += Accounts_CollectionChanged;
+            accounts.CollectionChanged += Accounts_CollectionChanged;
+            return accounts;
         }
 
+        /// <summary>
+        /// リストに変更があったとき
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Accounts_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             if (e.Action == NotifyCollectionChangedAction.Add)
@@ -247,6 +285,7 @@ namespace PassKeep.Material.ViewModel
                 {
                     item.PropertyChanged += Account_PropertyChanged;
                 }
+                HasChanges.Value = true;
             }
             else if (e.Action == NotifyCollectionChangedAction.Remove)
             {
@@ -254,9 +293,19 @@ namespace PassKeep.Material.ViewModel
                 {
                     item.PropertyChanged -= Account_PropertyChanged;
                 }
+                HasChanges.Value = true;
+            }
+            else if(e.Action == NotifyCollectionChangedAction.Move)
+            {
+                HasChanges.Value = true;
             }
         }
 
+        /// <summary>
+        /// 各データに変更があったとき
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Account_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             HasChanges.Value = true;
@@ -327,7 +376,7 @@ namespace PassKeep.Material.ViewModel
         /// </summary>
         internal string Password { get; set; }
 
-        public ReactiveProperty<ObservableCollection<Account>> Accounts { get; set; }
+        public ReactiveProperty<AccountList> Accounts { get; set; }
 
         public ReactiveProperty<Account> CurrentAccount { get; set; }
 
@@ -352,5 +401,7 @@ namespace PassKeep.Material.ViewModel
         public ReactiveProperty<SolidColorBrush> TitleBrush { get; set; }
 
         public bool IsLogout { get; set; }
+
+        public DragAcceptDescription Description { get; set; }
     }
 }
