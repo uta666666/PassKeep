@@ -34,5 +34,14 @@ namespace PassKeep.Material.Properties {
                 this["IsDark"] = value;
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("60")]
+        public int Timeout {
+            get {
+                return ((int)(this["Timeout"]));
+            }
+        }
     }
 }

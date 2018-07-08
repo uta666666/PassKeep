@@ -111,11 +111,15 @@
     <Compile Include="Common\CursorInfo.cs" />
     <Compile Include="Common\DragControlEventArgs.cs" />
     <Compile Include="Common\DragGhost.cs" />
+    <Compile Include="Common\FocusExtension.cs" />
     <Compile Include="Common\GlobalExclusionInfo.cs" />
     <Compile Include="Common\ThemeHelper.cs" />
     <Compile Include="Model\Account.cs" />
     <Compile Include="Model\AccountList.cs" />
+    <Compile Include="Model\Category.cs" />
+    <Compile Include="Model\CategoryList.cs" />
     <Compile Include="Model\DragAcceptDescription.cs" />
+    <Compile Include="ViewModel\CategoryViewModel.cs" />
     <Compile Include="ViewModel\ChangePasswordViewModel.cs" />
     <Compile Include="ViewModel\LogInViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
@@ -124,12 +128,21 @@
     <Compile Include="View\Behavior\DragStartBehavior.cs" />
     <Compile Include="View\Behavior\ForceLogoutBehavior.cs" />
     <Compile Include="View\Behavior\ListBoxItemSelectedBehavior.cs" />
+    <Compile Include="View\Behavior\ListBoxScrollBehavior.cs" />
     <Compile Include="View\Behavior\WindowCloseCheckBehavior.cs" />
     <Compile Include="View\Behavior\WindowDragMoveBehavior.cs" />
     <Compile Include="View\Behavior\WindowLoadBehavior.cs" />
+    <Compile Include="View\Converter\CategoryIDNameConverter.cs" />
+    <Compile Include="View\CategoryNameWindow.xaml.cs">
+      <DependentUpon>CategoryNameWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\MessageWindow.xaml.cs">
       <DependentUpon>MessageWindow.xaml</DependentUpon>
     </Compile>
+    <Page Include="View\CategoryNameWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="View\ChangePasswordWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

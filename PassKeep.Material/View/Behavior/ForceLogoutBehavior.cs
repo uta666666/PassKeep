@@ -29,33 +29,60 @@ namespace PassKeep.Material.View.Behavior
         protected override void OnAttached()
         {
             base.OnAttached();
-            AssociatedObject.MouseLeave += AssociatedObject_MouseLeave;
-            AssociatedObject.MouseEnter += AssociatedObject_MouseEnter;
+            AssociatedObject.Loaded += AssociatedObject_Loaded;
+            AssociatedObject.IsVisibleChanged += AssociatedObject_IsVisibleChanged;
+            AssociatedObject.MouseMove += AssociatedObject_MouseMove;
+            AssociatedObject.PreviewKeyDown += AssociatedObject_PreviewKeyDown;
         }
 
         protected override void OnDetaching()
         {
             base.OnDetaching();
-            AssociatedObject.MouseLeave -= AssociatedObject_MouseLeave;
-            AssociatedObject.MouseEnter -= AssociatedObject_MouseEnter;
+            AssociatedObject.Loaded -= AssociatedObject_Loaded;
+            AssociatedObject.IsVisibleChanged -= AssociatedObject_IsVisibleChanged;
+            AssociatedObject.MouseMove -= AssociatedObject_MouseMove;
+            AssociatedObject.PreviewKeyDown -= AssociatedObject_PreviewKeyDown;
         }
+
 
         private DispatcherTimer _timer;
         private DateTime _start;
+        private int _timeout;
 
-        private void AssociatedObject_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        private void AssociatedObject_Loaded(object sender, RoutedEventArgs e)
         {
             if (_timer == null)
             {
                 _timer = new DispatcherTimer();
                 _timer.Tick += _timer_Tick;
                 _timer.Interval = TimeSpan.FromMilliseconds(500);
+
+                _timeout = Properties.Settings.Default.Timeout;
             }
             _start = DateTime.Now;
             _timer.Start();
         }
 
-        private void AssociatedObject_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        private void AssociatedObject_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (_timer == null) return;
+
+            if (_timer.IsEnabled) return;
+
+            if (AssociatedObject.Visibility != Visibility.Visible) return;
+
+            _start = DateTime.Now;
+            _timer.Start();
+        }
+
+        private void AssociatedObject_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (_timer == null) return;
+
+            _start = DateTime.Now;
+        }
+
+        private void AssociatedObject_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (_timer == null) return;
 
@@ -65,7 +92,7 @@ namespace PassKeep.Material.View.Behavior
         private void _timer_Tick(object sender, EventArgs e)
         {
             var diff = DateTime.Now - _start;
-            if (diff >= TimeSpan.FromMinutes(1))
+            if (diff >= TimeSpan.FromSeconds(_timeout))
             {
                 _timer.Stop();
                 LogoutCommand?.Execute(AssociatedObject);

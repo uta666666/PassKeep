@@ -90,5 +90,20 @@ namespace PassKeep.Material.Model {
                 OnPropertyChanged(nameof(Mail));
             }
         }
+
+        private int _categoryID = 0;
+        public int CategoryID {
+            get {
+                return _categoryID;
+            }
+            set {
+                if(_categoryID == value)
+                {
+                    return;
+                }
+                _categoryID = value;
+                OnPropertyChanged(nameof(CategoryID));
+            }
+        }
     }
 }

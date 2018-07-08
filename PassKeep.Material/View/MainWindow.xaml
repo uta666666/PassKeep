@@ -5,6 +5,8 @@
     xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
     xmlns:Dialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
     xmlns:b="clr-namespace:PassKeep.Material.View.Behavior"
+    xmlns:co="clr-namespace:PassKeep.Material.Common"
+    xmlns:cv="clr-namespace:PassKeep.Material.View.Converter"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
     xmlns:livet="http://schemas.livet-mvvm.net/2011/wpf"
@@ -16,9 +18,9 @@
     xmlns:vm="clr-namespace:PassKeep.Material.ViewModel"
     x:Name="Main"
     Width="800"
-    Height="470"
+    Height="550"
     MinWidth="800"
-    MinHeight="470"
+    MinHeight="450"
     Dialog:DialogParticipation.Register="{Binding}"
     Background="{DynamicResource MaterialDesignPaper}"
     FontFamily="{DynamicResource MaterialDesignFont}"
@@ -44,6 +46,11 @@
         <DataTemplate DataType="{x:Type vm:MessageViewModel}">
             <v:MessageWindow />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CategoryViewModel}">
+            <v:CategoryNameWindow />
+        </DataTemplate>
+        <cv:CategoryIDNameConverter x:Key="CategoryConverter" />
+        <!--<CollectionViewSource x:Key="Source" Source="{Binding Accounts.Value}" />-->
     </Controls:MetroWindow.Resources>
     <Controls:MetroWindow.InputBindings>
         <KeyBinding
@@ -66,7 +73,7 @@
             Modifiers="Ctrl" />
     </Controls:MetroWindow.InputBindings>
     <i:Interaction.Behaviors>
-        <b:WindowDragMoveBehavior />
+        <b:WindowDragMoveBehavior IsDisableDragMove="{Binding ElementName=MenuToggleButton, Path=IsChecked, Mode=OneWay}" />
         <b:WindowCloseCheckBehavior HasChanges="{Binding HasChanges.Value, Mode=OneWay}" ShowDialogCommand="{Binding ShowDialogMahappsCommand}" />
         <b:WindowLoadBehavior HasChanges="{Binding HasChanges.Value, Mode=TwoWay}" IsDark="{Binding IsDark.Value, Mode=OneWay}" />
         <b:ForceLogoutBehavior LogoutCommand="{Binding LogoutCommand}" />
@@ -76,287 +83,392 @@
         Grid.RowSpan="2"
         Grid.Column="0"
         Grid.ColumnSpan="2"
-        CloseOnClickAway="True"
-        DialogContent="{Binding DialogVM.Value}"
-        IsOpen="{Binding IsDialogOpen.Value}">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="75" />
-                <RowDefinition Height="368*" />
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="19*" />
-                <ColumnDefinition Width="25*" />
-            </Grid.ColumnDefinitions>
-            <materialDesign:ColorZone
-                Grid.Row="0"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                Padding="16"
-                Mode="PrimaryDark">
-                <DockPanel>
-                    <materialDesign:PopupBox DockPanel.Dock="Right" PlacementMode="BottomAndAlignRightEdges">
-                        <StackPanel>
-                            <MenuItem
-                                Header="エクスポート"
-                                InputGestureText="Ctrl+E"
-                                IsEnabled="False">
-                                <MenuItem.Icon>
-                                    <materialDesign:PackIcon Kind="Export" />
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <MenuItem
-                                Command="{Binding SaveCommand}"
-                                Header="保存"
-                                InputGestureText="Ctrl+S">
-                                <MenuItem.Icon>
-                                    <materialDesign:PackIcon Kind="ContentSave" />
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <MenuItem
-                                Command="{Binding ShowChangePasswordCommand}"
-                                Header="パスワード変更"
-                                InputGestureText="Ctrl+P">
-                                <MenuItem.Icon>
-                                    <materialDesign:PackIcon Kind="KeyChange" />
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <Separator />
-                            <MenuItem
-                                Command="{Binding LogoutCommand}"
-                                CommandParameter="{Binding ElementName=Main}"
-                                Header="ログアウト"
-                                InputGestureText="Ctrl+L">
-                                <MenuItem.Icon>
-                                    <materialDesign:PackIcon Kind="ExitToApp" />
-                                </MenuItem.Icon>
-                            </MenuItem>
-                        </StackPanel>
-                    </materialDesign:PopupBox>
-                    <ToggleButton
-                        VerticalAlignment="Center"
-                        Command="{Binding ChangeLightDarkCommand}"
-                        CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=IsChecked}"
-                        DockPanel.Dock="Right"
-                        IsChecked="{Binding IsDark.Value}"
-                        Style="{StaticResource MaterialDesignSwitchDarkToggleButton}" />
-                    <StackPanel Orientation="Horizontal">
-                        <!--<ToggleButton Style="{DynamicResource MaterialDesignHamburgerToggleButton}" />-->
-                        <TextBlock
-                            Margin="16,0,0,0"
-                            VerticalAlignment="Center"
-                            Foreground="{Binding TitleBrush.Value}"
-                            Style="{StaticResource MaterialDesignTitleTextBlock}">
-                            PassKeep
-                        </TextBlock>
-                    </StackPanel>
-                </DockPanel>
-            </materialDesign:ColorZone>
-            <Border
-                Grid.Row="1"
-                Margin="10,10,10,10"
-                Padding="0"
-                BorderBrush="{DynamicResource PrimaryHueMidBrush}"
-                BorderThickness="1"
-                ClipToBounds="True">
-                <Grid>
+        CloseOnClickAway="True">
+        <materialDesign:DrawerHost IsLeftDrawerOpen="{Binding ElementName=MenuToggleButton, Path=IsChecked}">
+            <materialDesign:DrawerHost.LeftDrawerContent>
+                <Grid MinWidth="200">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="75" />
                         <RowDefinition Height="*" />
-                        <RowDefinition Height="30" />
+                        <RowDefinition Height="45" />
                     </Grid.RowDefinitions>
-                    <ListBox
-                        x:Name="titleList"
+                    <materialDesign:ColorZone
                         Grid.Row="0"
-                        AllowDrop="True"
+                        Margin="0,0,0,0"
+                        VerticalAlignment="Stretch"
+                        Mode="PrimaryDark">
+                        <ToggleButton
+                            Margin="16"
+                            HorizontalAlignment="Right"
+                            DockPanel.Dock="Top"
+                            IsChecked="{Binding ElementName=MenuToggleButton, Path=IsChecked, Mode=TwoWay}"
+                            Style="{StaticResource MaterialDesignHamburgerToggleButton}" />
+                    </materialDesign:ColorZone>
+                    <ListBox
+                        x:Name="DemoItemsListBox"
+                        Grid.Row="1"
+                        Margin="0,16,0,16"
                         FontSize="16"
-                        ItemsSource="{Binding Accounts.Value}"
-                        SelectedItem="{Binding CurrentAccount.Value}">
-                        <i:Interaction.Behaviors>
-                            <b:DragAcceptBehavior Description="{Binding Description}" />
-                        </i:Interaction.Behaviors>
-                        <ListBox.ItemContainerStyle>
-                            <Style BasedOn="{StaticResource {x:Type ListBoxItem}}" TargetType="{x:Type ListBoxItem}">
-                                <Setter Property="b:DragStartBehavior.IsAttached" Value="True" />
-                            </Style>
-                        </ListBox.ItemContainerStyle>
+                        ItemsSource="{Binding Categories.Value}"
+                        SelectedItem="{Binding CurrentCategory.Value}">
                         <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Title}" />
-                                </StackPanel>
+                            <DataTemplate DataType="domain:Category">
+                                <TextBlock Margin="32,0,32,0" Text="{Binding Name}" />
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                         <ListBox.ContextMenu>
-                            <ContextMenu>
+                            <ContextMenu IsEnabled="{Binding CategoryContextMenuEnabled.Value}">
                                 <MenuItem
-                                    Command="{Binding DeleteCommand}"
-                                    CommandParameter="{Binding CurrentAccount.Value}"
-                                    Header="削除" />
+                                    Command="{Binding ChangeCategoryNameCommand, Mode=TwoWay}"
+                                    CommandParameter="{Binding CurrentCategory.Value}"
+                                    Header="名前を変更">
+                                    <MenuItem.Icon>
+                                        <materialDesign:PackIcon Kind="RenameBox" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="{Binding DeleteCategoryCommand}"
+                                    CommandParameter="{Binding CurrentCategory.Value}"
+                                    Header="削除">
+                                    <MenuItem.Icon>
+                                        <materialDesign:PackIcon Kind="Delete" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
                             </ContextMenu>
                         </ListBox.ContextMenu>
                     </ListBox>
-                    <materialDesign:ColorZone
-                        Grid.Row="1"
+                    <Button
+                        Grid.Row="2"
                         Height="30"
-                        Mode="PrimaryDark" />
+                        Margin="5,0,5,10"
+                        Command="{Binding AddCategoryCommand}"
+                        Content="Add Category"
+                        Style="{StaticResource MaterialDesignFlatButton}" />
                 </Grid>
-            </Border>
-            <Button
-                x:Name="buttonAdd"
-                Grid.Row="1"
-                Width="32"
-                Height="32"
-                Margin="0,0,5,26"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Bottom"
-                Command="{Binding AddCommand}"
-                FontSize="20"
-                Foreground="White"
-                Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}">
-                <materialDesign:PackIcon
-                    Width="24"
-                    Height="24"
-                    Kind="Plus" />
-            </Button>
-            <Grid
-                Grid.Row="1"
-                Grid.Column="1"
-                Margin="0,20,0,0"
-                IsEnabled="{Binding IsEditable.Value}">
-                <TextBox
-                    Height="40"
-                    Margin="20,10,95,0"
-                    VerticalAlignment="Top"
-                    materialDesign:HintAssist.Hint="タイトル"
-                    materialDesign:HintAssist.IsFloating="True"
-                    FontSize="16"
-                    Text="{Binding CurrentAccount.Value.Title, UpdateSourceTrigger=PropertyChanged}"
-                    TextWrapping="NoWrap">
-                    <i:Interaction.Behaviors>
-                        <!--<b:TextBoxBehavior x:Name="textBoxBehavior" />-->
-                    </i:Interaction.Behaviors>
-                </TextBox>
-                <TextBox
-                    Height="40"
-                    Margin="20,70,95,0"
-                    VerticalAlignment="Top"
-                    materialDesign:HintAssist.Hint="ＩＤ"
-                    materialDesign:HintAssist.IsFloating="True"
-                    FontSize="16"
-                    Text="{Binding CurrentAccount.Value.ID, UpdateSourceTrigger=PropertyChanged}"
-                    TextWrapping="NoWrap" />
-                <PasswordBox
-                    x:Name="textBoxPassword"
-                    Height="40"
-                    Margin="20,130,95,0"
-                    VerticalAlignment="Top"
-                    materialDesign:HintAssist.Hint="パスワード"
-                    FontSize="16"
-                    Style="{StaticResource MaterialDesignFloatingHintPasswordBox}">
-                    <i:Interaction.Behaviors>
-                        <livet:PasswordBoxBindingSupportBehavior Password="{Binding CurrentAccount.Value.Password, UpdateSourceTrigger=PropertyChanged}" />
-                    </i:Interaction.Behaviors>
-                </PasswordBox>
-                <TextBox
-                    Height="40"
-                    Margin="20,190,95,0"
-                    VerticalAlignment="Top"
-                    materialDesign:HintAssist.Hint="メールアドレス"
-                    materialDesign:HintAssist.IsFloating="True"
-                    FontSize="16"
-                    Text="{Binding CurrentAccount.Value.Mail, UpdateSourceTrigger=PropertyChanged}"
-                    TextWrapping="NoWrap" />
-                <TextBox
-                    Height="40"
-                    Margin="20,250,95,0"
-                    VerticalAlignment="Top"
-                    materialDesign:HintAssist.Hint="ＵＲＬ"
-                    materialDesign:HintAssist.IsFloating="True"
-                    FontSize="16"
-                    Text="{Binding CurrentAccount.Value.URL, UpdateSourceTrigger=PropertyChanged}"
-                    TextWrapping="NoWrap" />
-                <Button
-                    x:Name="buttonCopy2"
-                    Width="35"
-                    Height="35"
-                    Margin="0,75,10,0"
+            </materialDesign:DrawerHost.LeftDrawerContent>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="75" />
+                    <RowDefinition Height="368*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="19*" />
+                    <ColumnDefinition Width="25*" />
+                </Grid.ColumnDefinitions>
+                <materialDesign:ColorZone
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Margin="0,0,0,0"
+                    Padding="16"
+                    VerticalAlignment="Stretch"
+                    Mode="PrimaryDark">
+                    <DockPanel>
+                        <materialDesign:PopupBox DockPanel.Dock="Right" PlacementMode="BottomAndAlignRightEdges">
+                            <StackPanel>
+                                <MenuItem
+                                    Header="エクスポート"
+                                    InputGestureText="Ctrl+E"
+                                    IsEnabled="False">
+                                    <MenuItem.Icon>
+                                        <materialDesign:PackIcon Kind="Export" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="{Binding SaveCommand}"
+                                    Header="保存"
+                                    InputGestureText="Ctrl+S">
+                                    <MenuItem.Icon>
+                                        <materialDesign:PackIcon Kind="ContentSave" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="{Binding ShowChangePasswordCommand}"
+                                    Header="パスワード変更"
+                                    InputGestureText="Ctrl+P">
+                                    <MenuItem.Icon>
+                                        <materialDesign:PackIcon Kind="KeyChange" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator />
+                                <MenuItem
+                                    Command="{Binding LogoutCommand}"
+                                    CommandParameter="{Binding ElementName=Main}"
+                                    Header="ログアウト"
+                                    InputGestureText="Ctrl+L">
+                                    <MenuItem.Icon>
+                                        <materialDesign:PackIcon Kind="ExitToApp" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </StackPanel>
+                        </materialDesign:PopupBox>
+                        <ToggleButton
+                            VerticalAlignment="Center"
+                            Command="{Binding ChangeLightDarkCommand}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=IsChecked}"
+                            DockPanel.Dock="Right"
+                            IsChecked="{Binding IsDark.Value}"
+                            Style="{StaticResource MaterialDesignSwitchDarkToggleButton}" />
+                        <StackPanel Orientation="Horizontal">
+                            <ToggleButton
+                                x:Name="MenuToggleButton"
+                                IsChecked="{Binding IsDispSidePanel.Value}"
+                                Style="{StaticResource MaterialDesignHamburgerToggleButton}" />
+                            <TextBlock
+                                Margin="16,0,0,0"
+                                VerticalAlignment="Center"
+                                Foreground="{Binding TitleBrush.Value}"
+                                Style="{StaticResource MaterialDesignTitleTextBlock}">
+                                PassKeep
+                            </TextBlock>
+                        </StackPanel>
+                    </DockPanel>
+                </materialDesign:ColorZone>
+                <Border
+                    Grid.Row="1"
+                    Margin="10,10,10,10"
                     Padding="0"
+                    BorderBrush="{DynamicResource PrimaryHueMidBrush}"
+                    BorderThickness="1"
+                    ClipToBounds="True">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="30" />
+                        </Grid.RowDefinitions>
+                        <ListBox
+                            x:Name="titleList"
+                            Grid.Row="0"
+                            AllowDrop="True"
+                            FontSize="16"
+                            ItemsSource="{Binding Accounts.Value}"
+                            SelectedItem="{Binding CurrentAccount.Value}">
+                            <i:Interaction.Behaviors>
+                                <b:DragAcceptBehavior Description="{Binding Description}" />
+                                <b:ListBoxScrollBehavior Target="{Binding CurrentAccount, Mode=OneWay}" />
+                            </i:Interaction.Behaviors>
+                            <ListBox.ItemContainerStyle>
+                                <Style BasedOn="{StaticResource {x:Type ListBoxItem}}" TargetType="{x:Type ListBoxItem}">
+                                    <Setter Property="b:DragStartBehavior.IsAttached" Value="True" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Title}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                            <ListBox.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem
+                                        Command="{Binding DeleteCommand}"
+                                        CommandParameter="{Binding CurrentAccount.Value}"
+                                        Header="削除">
+                                        <MenuItem.Icon>
+                                            <materialDesign:PackIcon Kind="Delete" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                </ContextMenu>
+                            </ListBox.ContextMenu>
+                        </ListBox>
+                        <materialDesign:ColorZone
+                            Grid.Row="1"
+                            Height="30"
+                            Mode="PrimaryDark" />
+                    </Grid>
+                </Border>
+                <Button
+                    x:Name="buttonAdd"
+                    Grid.Row="1"
+                    Width="32"
+                    Height="32"
+                    Margin="0,0,5,26"
                     HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Command="{Binding CopyToClipBoardCommand}"
-                    CommandParameter="{Binding CurrentAccount.Value.ID}">
+                    VerticalAlignment="Bottom"
+                    Command="{Binding AddCommand}"
+                    FontSize="20"
+                    Foreground="White"
+                    Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}">
                     <materialDesign:PackIcon
                         Width="24"
                         Height="24"
-                        Kind="ClipboardText" />
+                        Kind="Plus" />
                 </Button>
-                <Button
-                    x:Name="buttonCopy3"
-                    Width="35"
-                    Height="35"
-                    Margin="0,135,10,0"
-                    Padding="0"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Command="{Binding CopyToClipBoardCommand}"
-                    CommandParameter="{Binding CurrentAccount.Value.Password}">
-                    <materialDesign:PackIcon
-                        Width="24"
-                        Height="24"
-                        Kind="ClipboardText" />
-                </Button>
-                <Button
-                    x:Name="buttonCopy4"
-                    Width="35"
-                    Height="35"
-                    Margin="0,255,10,0"
-                    Padding="0"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Command="{Binding CopyToClipBoardCommand}"
-                    CommandParameter="{Binding CurrentAccount.Value.Password}">
-                    <materialDesign:PackIcon
-                        Width="24"
-                        Height="24"
-                        Kind="ClipboardText" />
-                </Button>
-                <Button
-                    x:Name="buttonBrowser"
-                    Width="35"
-                    Height="35"
-                    Margin="0,255,50,0"
-                    Padding="0"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Command="{Binding OpenBrowserCommand}"
-                    CommandParameter="{Binding CurrentAccount.Value.URL}">
-                    <materialDesign:PackIcon
-                        Width="24"
-                        Height="24"
-                        Kind="Earth" />
-                </Button>
-                <Button
-                    x:Name="buttonCopy3_Copy"
-                    Width="35"
-                    Height="35"
-                    Margin="0,195,10,0"
-                    Padding="0"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Command="{Binding CopyToClipBoardCommand}"
-                    CommandParameter="{Binding CurrentAccount.Value.Password}">
-                    <materialDesign:PackIcon
-                        Width="24"
-                        Height="24"
-                        Kind="ClipboardText" />
-                </Button>
+                <Grid
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Margin="0,10,0,0"
+                    IsEnabled="{Binding IsEditable.Value}">
+                    <TextBox
+                        Height="40"
+                        Margin="20,25,95,0"
+                        VerticalAlignment="Top"
+                        co:FocusExtension.IsFocused="{Binding IsTitleFocused.Value, Mode=TwoWay}"
+                        materialDesign:HintAssist.Hint="タイトル"
+                        materialDesign:HintAssist.IsFloating="True"
+                        FontSize="16"
+                        Text="{Binding CurrentAccount.Value.Title, UpdateSourceTrigger=PropertyChanged}"
+                        TextWrapping="NoWrap">
+                        <i:Interaction.Behaviors>
+                            <!--<b:TextBoxBehavior x:Name="textBoxBehavior" />-->
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                    <TextBox
+                        Height="40"
+                        Margin="20,90,95,0"
+                        VerticalAlignment="Top"
+                        materialDesign:HintAssist.Hint="ＩＤ"
+                        materialDesign:HintAssist.IsFloating="True"
+                        FontSize="16"
+                        Text="{Binding CurrentAccount.Value.ID, UpdateSourceTrigger=PropertyChanged}"
+                        TextWrapping="NoWrap" />
+                    <PasswordBox
+                        x:Name="textBoxPassword"
+                        Height="40"
+                        Margin="20,155,95,0"
+                        VerticalAlignment="Top"
+                        materialDesign:HintAssist.Hint="パスワード"
+                        FontSize="16"
+                        Style="{StaticResource MaterialDesignFloatingHintPasswordBox}">
+                        <i:Interaction.Behaviors>
+                            <livet:PasswordBoxBindingSupportBehavior Password="{Binding CurrentAccount.Value.Password, UpdateSourceTrigger=PropertyChanged}" />
+                        </i:Interaction.Behaviors>
+                    </PasswordBox>
+                    <TextBox
+                        Height="40"
+                        Margin="20,220,95,0"
+                        VerticalAlignment="Top"
+                        materialDesign:HintAssist.Hint="メールアドレス"
+                        materialDesign:HintAssist.IsFloating="True"
+                        FontSize="16"
+                        Text="{Binding CurrentAccount.Value.Mail, UpdateSourceTrigger=PropertyChanged}"
+                        TextWrapping="NoWrap" />
+                    <TextBox
+                        Height="40"
+                        Margin="20,285,95,0"
+                        VerticalAlignment="Top"
+                        materialDesign:HintAssist.Hint="ＵＲＬ"
+                        materialDesign:HintAssist.IsFloating="True"
+                        FontSize="16"
+                        Text="{Binding CurrentAccount.Value.URL, UpdateSourceTrigger=PropertyChanged}"
+                        TextWrapping="NoWrap" />
+                    <ComboBox
+                        Height="45"
+                        Margin="20,350,95,0"
+                        VerticalAlignment="Top"
+                        materialDesign:HintAssist.Hint="カテゴリ"
+                        FontSize="16"
+                        ItemsSource="{Binding Categories.Value}"
+                        SelectedIndex="{Binding CurrentAccount.Value.CategoryID}"
+                        Style="{StaticResource MaterialDesignFloatingHintComboBox}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate DataType="domain:Category">
+                                <TextBlock Margin="0,0,0,0" Text="{Binding Name}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <Button
+                        x:Name="buttonCopy2"
+                        Width="35"
+                        Height="35"
+                        Margin="0,95,10,0"
+                        Padding="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Command="{Binding CopyToClipBoardCommand}"
+                        CommandParameter="{Binding CurrentAccount.Value.ID}">
+                        <materialDesign:PackIcon
+                            Width="24"
+                            Height="24"
+                            Kind="ClipboardText" />
+                    </Button>
+                    <Button
+                        x:Name="buttonCopy3"
+                        Width="35"
+                        Height="35"
+                        Margin="0,160,10,0"
+                        Padding="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Command="{Binding CopyToClipBoardCommand}"
+                        CommandParameter="{Binding CurrentAccount.Value.Password}">
+                        <materialDesign:PackIcon
+                            Width="24"
+                            Height="24"
+                            Kind="ClipboardText" />
+                    </Button>
+                    <Button
+                        x:Name="buttonCopy4"
+                        Width="35"
+                        Height="35"
+                        Margin="0,290,10,0"
+                        Padding="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Command="{Binding CopyToClipBoardCommand}"
+                        CommandParameter="{Binding CurrentAccount.Value.Password}">
+                        <materialDesign:PackIcon
+                            Width="24"
+                            Height="24"
+                            Kind="ClipboardText" />
+                    </Button>
+                    <Button
+                        x:Name="buttonBrowser"
+                        Width="35"
+                        Height="35"
+                        Margin="0,290,50,0"
+                        Padding="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Command="{Binding OpenBrowserCommand}"
+                        CommandParameter="{Binding CurrentAccount.Value.URL}">
+                        <materialDesign:PackIcon
+                            Width="24"
+                            Height="24"
+                            Kind="Earth" />
+                    </Button>
+                    <Button
+                        x:Name="buttonCopy3_Copy"
+                        Width="35"
+                        Height="35"
+                        Margin="0,225,10,0"
+                        Padding="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Command="{Binding CopyToClipBoardCommand}"
+                        CommandParameter="{Binding CurrentAccount.Value.Password}">
+                        <materialDesign:PackIcon
+                            Width="24"
+                            Height="24"
+                            Kind="ClipboardText" />
+                    </Button>
+                    <!--<TextBox
+                        Height="40"
+                        Margin="20,350,268,0"
+                        VerticalAlignment="Top"
+                        materialDesign:HintAssist.Hint="カテゴリ"
+                        materialDesign:HintAssist.IsFloating="True"
+                        FontSize="16"
+                        TextWrapping="NoWrap">
+                        <TextBox.Text>
+                            <MultiBinding Converter="{StaticResource CategoryConverter}">
+                                <Binding
+                                    Mode="TwoWay"
+                                    Path="CurrentAccount.Value"
+                                    UpdateSourceTrigger="PropertyChanged" />
+                                <Binding Mode="TwoWay" Path="Categories.Value" />
+                            </MultiBinding>
+                        </TextBox.Text>
+                    </TextBox>-->
+                </Grid>
+                <materialDesign:Snackbar
+                    x:Name="SnackbarThree"
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    MessageQueue="{Binding MessageQueue}" />
             </Grid>
-            <materialDesign:Snackbar
-                x:Name="SnackbarThree"
-                Grid.Row="1"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                MessageQueue="{Binding MessageQueue}" />
-        </Grid>
+        </materialDesign:DrawerHost>
     </materialDesign:DialogHost>
 </Controls:MetroWindow>

@@ -42,7 +42,7 @@ namespace PassKeep.Material
 
         private void _mainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            var isLogout = ((sender as MainWindow).DataContext as MainViewModel).IsLogout;
+            var isLogout = (_mainWindow.DataContext as MainViewModel).IsLogout;
             if (isLogout)
             {
                 e.Cancel = true;

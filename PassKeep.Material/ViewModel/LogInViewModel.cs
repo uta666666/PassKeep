@@ -14,6 +14,7 @@ using System.Threading;
 using Reactive.Bindings;
 using System.ComponentModel;
 using System.Collections;
+using MahApps.Metro.Controls.Dialogs;
 
 namespace PassKeep.Material.ViewModel {
     public class LogInViewModel : Livet.ViewModel, INotifyDataErrorInfo
@@ -137,5 +138,7 @@ namespace PassKeep.Material.ViewModel {
         public ReactiveProperty<string> Message { get; set; }
 
         public ReactiveProperty<Visibility> ConfirmPasswordVisibility { get; set; }
+
+        public IDialogCoordinator MahAppsDialogCoordinator { get; set; }
     }
 }
