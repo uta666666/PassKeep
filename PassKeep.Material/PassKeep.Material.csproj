@@ -109,6 +109,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Common\CursorInfo.cs" />
+    <Compile Include="Common\Definitions.cs" />
     <Compile Include="Common\DragControlEventArgs.cs" />
     <Compile Include="Common\DragGhost.cs" />
     <Compile Include="Common\FocusExtension.cs" />
@@ -139,6 +140,7 @@
     <Compile Include="View\MessageWindow.xaml.cs">
       <DependentUpon>MessageWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="View\TemplateSelector\ListBoxItemTemplateSelector.cs" />
     <Page Include="View\CategoryNameWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -217,5 +219,6 @@
   <ItemGroup>
     <Resource Include="key.ico" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

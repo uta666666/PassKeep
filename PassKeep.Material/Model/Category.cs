@@ -29,7 +29,7 @@ namespace PassKeep.Material.Model
             }
         }
 
-        private string _name { get; set; }
+        private string _name;
         public string Name {
             get {
                 return _name;
@@ -39,6 +39,19 @@ namespace PassKeep.Material.Model
 
                 _name = value;
                 OnPropertyChanged(nameof(Name));
+            }
+        }
+
+        private bool _isEdit;
+        public bool IsEdit {
+            get {
+                return _isEdit;
+            }
+            set {
+                if (_isEdit == value) return;
+
+                _isEdit = value;
+                OnPropertyChanged(nameof(IsEdit));
             }
         }
     }

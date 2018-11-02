@@ -14,6 +14,7 @@
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:s="clr-namespace:System;assembly=mscorlib"
+    xmlns:te="clr-namespace:PassKeep.Material.View.TemplateSelector"
     xmlns:v="clr-namespace:PassKeep.Material.View"
     xmlns:vm="clr-namespace:PassKeep.Material.ViewModel"
     x:Name="Main"
@@ -40,6 +41,7 @@
     <Controls:MetroWindow.Resources>
         <s:Boolean x:Key="True">True</s:Boolean>
         <s:Boolean x:Key="False">False</s:Boolean>
+        <cv:CategoryIDNameConverter x:Key="CategoryConverter" />
         <DataTemplate DataType="{x:Type vm:ChangePasswordViewModel}">
             <v:ChangePasswordWindow />
         </DataTemplate>
@@ -49,7 +51,30 @@
         <DataTemplate DataType="{x:Type vm:CategoryViewModel}">
             <v:CategoryNameWindow />
         </DataTemplate>
-        <cv:CategoryIDNameConverter x:Key="CategoryConverter" />
+        <DataTemplate x:Key="ListBoxItemConfirm" DataType="domain:Category">
+            <TextBlock Margin="32,0,32,0" Text="{Binding Name}" />
+        </DataTemplate>
+        <DataTemplate x:Key="ListBoxItemEdit" DataType="domain:Category">
+            <TextBox Margin="32,0,32,0" Text="{Binding Name}" />
+        </DataTemplate>
+        <te:ListBoxItemTemplateSelector
+            x:Key="ListBoxItemSelector"
+            TemplateConfirm="{StaticResource ListBoxItemConfirm}"
+            TemplateEdit="{StaticResource ListBoxItemEdit}" />
+        <Style
+            x:Key="ListBoxItemStyle"
+            BasedOn="{StaticResource {x:Type ListBox}}"
+            TargetType="{x:Type ListBox}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding CategoryEditMode.Value}" Value="1">
+                    <Setter Property="ItemTemplate" Value="{StaticResource ListBoxItemConfirm}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding CategoryEditMode.Value}" Value="2">
+                    <!--<Setter Property="ItemTemplate" Value="{StaticResource ListBoxEdit}" />-->
+                    <Setter Property="ItemTemplateSelector" Value="{StaticResource ListBoxItemSelector}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
         <!--<CollectionViewSource x:Key="Source" Source="{Binding Accounts.Value}" />-->
     </Controls:MetroWindow.Resources>
     <Controls:MetroWindow.InputBindings>
@@ -110,12 +135,8 @@
                         Margin="0,16,0,16"
                         FontSize="16"
                         ItemsSource="{Binding Categories.Value}"
-                        SelectedItem="{Binding CurrentCategory.Value}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate DataType="domain:Category">
-                                <TextBlock Margin="32,0,32,0" Text="{Binding Name}" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
+                        SelectedItem="{Binding CurrentCategory.Value}"
+                        Style="{StaticResource ListBoxItemStyle}">
                         <ListBox.ContextMenu>
                             <ContextMenu IsEnabled="{Binding CategoryContextMenuEnabled.Value}">
                                 <MenuItem
@@ -136,13 +157,16 @@
                                 </MenuItem>
                             </ContextMenu>
                         </ListBox.ContextMenu>
+                        <i:Interaction.Behaviors>
+                            <b:ListBoxItemSelectedBehavior CurrentCategory="{Binding CurrentCategory.Value}" EditMode="{Binding CategoryEditMode.Value}" />
+                        </i:Interaction.Behaviors>
                     </ListBox>
                     <Button
                         Grid.Row="2"
                         Height="30"
                         Margin="5,0,5,10"
                         Command="{Binding AddCategoryCommand}"
-                        Content="Add Category"
+                        Content="{Binding CategoryButtonText.Value}"
                         Style="{StaticResource MaterialDesignFlatButton}" />
                 </Grid>
             </materialDesign:DrawerHost.LeftDrawerContent>

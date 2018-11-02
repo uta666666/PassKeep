@@ -1,22 +1,22 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using MahApps.Metro.Controls.Dialogs;
+using MaterialDesignThemes.Wpf;
 using Newtonsoft.Json;
 using PassKeep.Material.Common;
 using PassKeep.Material.Model;
-using System.Collections.ObjectModel;
-using System.Windows;
-using System.Diagnostics;
-using System.IO;
 using Reactive.Bindings;
-using MaterialDesignThemes.Wpf;
-using System.Reactive.Linq;
-using MahApps.Metro.Controls.Dialogs;
-using System.Windows.Media;
-using System.Collections.Specialized;
-using System.ComponentModel;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Reactive.Linq;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Media;
 
 namespace PassKeep.Material.ViewModel
 {
@@ -198,33 +198,49 @@ namespace PassKeep.Material.ViewModel
 
             //カテゴリ追加
             AddCategoryCommand = new ReactiveCommand();
-            AddCategoryCommand.Subscribe(async () =>
+            AddCategoryCommand.Subscribe(() =>
             {
-                var maxId = Categories.Value.Max(n => n.ID);
-                var categoryVm = new CategoryViewModel() { CategoryName = new ReactiveProperty<string>($"category{maxId + 1}") };
-
-                var result = await DialogHost.Show(categoryVm);
-                if ((result as bool?) ?? false)
+                if ((EditMode)CategoryEditMode.Value == EditMode.Edit)
                 {
-                    var category = new Category() { ID = maxId + 1, Name = categoryVm.CategoryName.Value };
-                    Categories.Value.Add(category);
-
-                    CurrentCategory.Value = category;
+                    foreach (var cat in Categories.Value)
+                    {
+                        cat.IsEdit = false;
+                    }
+                    CategoryButtonText.Value = "Add Category";
+                    CategoryEditMode.Value = (int)EditMode.Confirm;
                 }
-                IsDispSidePanel.Value = false;
+                else
+                {
+                    var maxId = Categories.Value.Max(n => n.ID);
+                    var category = new Category() { ID = maxId + 1, Name = $"category{maxId + 1}", IsEdit = true };
+                    Categories.Value.Add(category);
+                    CurrentCategory.Value = category;
+
+                    CategoryButtonText.Value = "OK";
+                    CategoryEditMode.Value = (int)EditMode.Edit;
+                }
             });
 
             ChangeCategoryNameCommand = new ReactiveCommand<Category>();
-            ChangeCategoryNameCommand.Subscribe(async n =>
+            ChangeCategoryNameCommand.Subscribe(n =>
             {
-                var categoryVm = new CategoryViewModel() { CategoryName = new ReactiveProperty<string>(n.Name) };
-
-                var result = await DialogHost.Show(categoryVm);
-                if ((result as bool?) ?? false)
+                if ((EditMode)CategoryEditMode.Value == EditMode.Edit)
                 {
-                    n.Name = categoryVm.CategoryName.Value;
+                    foreach (var cat in Categories.Value)
+                    {
+                        cat.IsEdit = false;
+                    }
+                    CategoryButtonText.Value = "Add Category";
+                    CategoryEditMode.Value = (int)EditMode.Confirm;
                 }
-                var a = Categories.Value;
+                else
+                {
+                    n.IsEdit = true;
+                    CurrentCategory.Value = n;
+
+                    CategoryButtonText.Value = "OK";
+                    CategoryEditMode.Value = (int)EditMode.Edit;
+                }
             });
 
             DeleteCategoryCommand = new ReactiveCommand<Category>();
@@ -280,6 +296,8 @@ namespace PassKeep.Material.ViewModel
             IsDispSidePanel = new ReactiveProperty<bool>(false);
             CategoryViewModel = new ReactiveProperty<CategoryViewModel>();
             CategoryContextMenuEnabled = new ReactiveProperty<bool>(true);
+            CategoryButtonText = new ReactiveProperty<string>("Add Category");
+            CategoryEditMode = new ReactiveProperty<int>((int)EditMode.Confirm);
 
             //ドラッグでの並べ替え対応
             Description = CreateDragAcceptDescription();
@@ -329,6 +347,25 @@ namespace PassKeep.Material.ViewModel
                 };
 
                 CurrentAccount.Value = Accounts.Value.Where(n => (c.ID == 0 || n.CategoryID == c.ID)).FirstOrDefault();
+            });
+
+            //カテゴリパネルがとじたとき
+            IsDispSidePanel.Subscribe(n =>
+            {
+                if (n) return;
+
+                if ((EditMode)CategoryEditMode.Value == EditMode.Edit)
+                {
+                    //変更中のものは破棄する
+                    var targets = Categories.Value.Where(c => c.IsEdit).ToList();
+                    for (int i = targets.Count() - 1; i >= 0; i--)
+                    {
+                        var target = targets[i];
+                        Categories.Value.Remove(target);
+                    }
+                    CategoryButtonText.Value = "Add Category";
+                    CategoryEditMode.Value = (int)EditMode.Confirm;
+                }
             });
         }
 
@@ -394,7 +431,7 @@ namespace PassKeep.Material.ViewModel
                 categories = JsonConvert.DeserializeObject<CategoryList>(decryptCatStr);
                 categories.CopyTo(_categoriesBackup);
             }
-            foreach(var cat in categories)
+            foreach (var cat in categories)
             {
                 cat.PropertyChanged += Cat_PropertyChanged;
             }
@@ -531,6 +568,7 @@ namespace PassKeep.Material.ViewModel
 
         public ReactiveCommand<Category> DeleteCategoryCommand { get; set; }
 
+
         /// <summary>
         /// パスワード
         /// </summary>
@@ -589,6 +627,10 @@ namespace PassKeep.Material.ViewModel
         /// 
         /// </summary>
         public ReactiveProperty<bool> CategoryContextMenuEnabled { get; set; }
+
+        public ReactiveProperty<int> CategoryEditMode { get; set; }
+
+        public ReactiveProperty<string> CategoryButtonText { get; set; }
 
         /// <summary>
         /// ログアウト
