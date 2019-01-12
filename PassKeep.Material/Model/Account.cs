@@ -105,5 +105,18 @@ namespace PassKeep.Material.Model {
                 OnPropertyChanged(nameof(CategoryID));
             }
         }
+
+        private bool _isEdit;
+        public bool IsEdit {
+            get {
+                return _isEdit;
+            }
+            set {
+                if (_isEdit == value) return;
+
+                _isEdit = value;
+                OnPropertyChanged(nameof(IsEdit));
+            }
+        }
     }
 }

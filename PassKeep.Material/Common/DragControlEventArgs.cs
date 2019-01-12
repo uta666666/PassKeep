@@ -9,15 +9,15 @@ using System.Windows.Controls;
 
 namespace PassKeep.Material.Common
 {
-    public class DragControlEventArgs : RoutedEventArgs
+    public class DragControlEventArgs<T> : RoutedEventArgs
     {
-        public DragControlEventArgs(Account src, int newIndex)
+        public DragControlEventArgs(T src, int newIndex)
         {
             MovingData = src;
             NewIndex = newIndex;
         }
 
-        public Account MovingData { get; set; }
+        public T MovingData { get; set; }
 
         public int NewIndex { get; set; }
     }

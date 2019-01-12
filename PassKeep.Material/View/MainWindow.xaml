@@ -19,9 +19,9 @@
     xmlns:vm="clr-namespace:PassKeep.Material.ViewModel"
     x:Name="Main"
     Width="800"
-    Height="550"
+    Height="580"
     MinWidth="800"
-    MinHeight="450"
+    MinHeight="580"
     Dialog:DialogParticipation.Register="{Binding}"
     Background="{DynamicResource MaterialDesignPaper}"
     FontFamily="{DynamicResource MaterialDesignFont}"
@@ -41,7 +41,13 @@
     <Controls:MetroWindow.Resources>
         <s:Boolean x:Key="True">True</s:Boolean>
         <s:Boolean x:Key="False">False</s:Boolean>
+
         <cv:CategoryIDNameConverter x:Key="CategoryConverter" />
+        <cv:BoolNegativeConverter x:Key="BoolNegativeConverter" />
+        <cv:BoolVisibilityConverter x:Key="BoolVisibilityConverter" />
+
+        <!--<CollectionViewSource Source="{Binding CategoriesForAccount.Value}" x:Key="CatSource1"/>-->
+
         <DataTemplate DataType="{x:Type vm:ChangePasswordViewModel}">
             <v:ChangePasswordWindow />
         </DataTemplate>
@@ -51,12 +57,17 @@
         <DataTemplate DataType="{x:Type vm:CategoryViewModel}">
             <v:CategoryNameWindow />
         </DataTemplate>
+
         <DataTemplate x:Key="ListBoxItemConfirm" DataType="domain:Category">
             <TextBlock Margin="32,0,32,0" Text="{Binding Name}" />
         </DataTemplate>
         <DataTemplate x:Key="ListBoxItemEdit" DataType="domain:Category">
-            <TextBox Margin="32,0,32,0" Text="{Binding Name}" />
+            <TextBox
+                Margin="32,0,32,0"
+                co:FocusExtension.IsFocused="{Binding IsEdit}"
+                Text="{Binding Name}" />
         </DataTemplate>
+
         <te:ListBoxItemTemplateSelector
             x:Key="ListBoxItemSelector"
             TemplateConfirm="{StaticResource ListBoxItemConfirm}"
@@ -70,7 +81,9 @@
                     <Setter Property="ItemTemplate" Value="{StaticResource ListBoxItemConfirm}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding CategoryEditMode.Value}" Value="2">
-                    <!--<Setter Property="ItemTemplate" Value="{StaticResource ListBoxEdit}" />-->
+                    <Setter Property="ItemTemplateSelector" Value="{StaticResource ListBoxItemSelector}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding CategoryEditMode.Value}" Value="3">
                     <Setter Property="ItemTemplateSelector" Value="{StaticResource ListBoxItemSelector}" />
                 </DataTrigger>
             </Style.Triggers>
@@ -78,10 +91,11 @@
         <!--<CollectionViewSource x:Key="Source" Source="{Binding Accounts.Value}" />-->
     </Controls:MetroWindow.Resources>
     <Controls:MetroWindow.InputBindings>
-        <KeyBinding
+        <!--  とりあえずなし  -->
+        <!--<KeyBinding
             Key="S"
             Command="{Binding SaveCommand}"
-            Modifiers="Ctrl" />
+            Modifiers="Ctrl" />-->
         <KeyBinding
             Key="W"
             Command="{Binding CloseWindowCommand}"
@@ -96,10 +110,11 @@
             Command="{Binding LogoutCommand}"
             CommandParameter="{Binding ElementName=Main}"
             Modifiers="Ctrl" />
+        <KeyBinding Key="Esc" Command="{Binding CancelEditCategoryCommand}" />
     </Controls:MetroWindow.InputBindings>
     <i:Interaction.Behaviors>
         <b:WindowDragMoveBehavior IsDisableDragMove="{Binding ElementName=MenuToggleButton, Path=IsChecked, Mode=OneWay}" />
-        <b:WindowCloseCheckBehavior HasChanges="{Binding HasChanges.Value, Mode=OneWay}" ShowDialogCommand="{Binding ShowDialogMahappsCommand}" />
+        <b:WindowCloseCheckBehavior HasChanges="{Binding HasChanges.Value, Mode=OneWay}" SaveCommand="{Binding ShowDialogMahappsCommand}" />
         <b:WindowLoadBehavior HasChanges="{Binding HasChanges.Value, Mode=TwoWay}" IsDark="{Binding IsDark.Value, Mode=OneWay}" />
         <b:ForceLogoutBehavior LogoutCommand="{Binding LogoutCommand}" />
     </i:Interaction.Behaviors>
@@ -133,6 +148,7 @@
                         x:Name="DemoItemsListBox"
                         Grid.Row="1"
                         Margin="0,16,0,16"
+                        AllowDrop="True"
                         FontSize="16"
                         ItemsSource="{Binding Categories.Value}"
                         SelectedItem="{Binding CurrentCategory.Value}"
@@ -159,15 +175,27 @@
                         </ListBox.ContextMenu>
                         <i:Interaction.Behaviors>
                             <b:ListBoxItemSelectedBehavior CurrentCategory="{Binding CurrentCategory.Value}" EditMode="{Binding CategoryEditMode.Value}" />
+                            <b:CategoryDragAcceptBehavior CategoryDescription="{Binding CategoriesDescription}" />
                         </i:Interaction.Behaviors>
+                        <ListBox.ItemContainerStyle>
+                            <Style BasedOn="{StaticResource {x:Type ListBoxItem}}" TargetType="{x:Type ListBoxItem}">
+                                <Setter Property="b:DragStartBehavior.IsAttached" Value="True" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
                     </ListBox>
                     <Button
                         Grid.Row="2"
                         Height="30"
                         Margin="5,0,5,10"
-                        Command="{Binding AddCategoryCommand}"
                         Content="{Binding CategoryButtonText.Value}"
-                        Style="{StaticResource MaterialDesignFlatButton}" />
+                        Style="{StaticResource MaterialDesignFlatButton}">
+                        <i:Interaction.Behaviors>
+                            <b:EditCategoryBehavior
+                                AddCategoryCommand="{Binding AddCategoryCommand}"
+                                CategoryEditMode="{Binding CategoryEditMode.Value}"
+                                SaveCategoryCommand="{Binding SaveCategoryCommand}" />
+                        </i:Interaction.Behaviors>
+                    </Button>
                 </Grid>
             </materialDesign:DrawerHost.LeftDrawerContent>
             <Grid>
@@ -198,14 +226,15 @@
                                         <materialDesign:PackIcon Kind="Export" />
                                     </MenuItem.Icon>
                                 </MenuItem>
-                                <MenuItem
+                                <!--  とりあえずなし  -->
+                                <!--<MenuItem
                                     Command="{Binding SaveCommand}"
                                     Header="保存"
                                     InputGestureText="Ctrl+S">
                                     <MenuItem.Icon>
                                         <materialDesign:PackIcon Kind="ContentSave" />
                                     </MenuItem.Icon>
-                                </MenuItem>
+                                </MenuItem>-->
                                 <MenuItem
                                     Command="{Binding ShowChangePasswordCommand}"
                                     Header="パスワード変更"
@@ -268,7 +297,7 @@
                             ItemsSource="{Binding Accounts.Value}"
                             SelectedItem="{Binding CurrentAccount.Value}">
                             <i:Interaction.Behaviors>
-                                <b:DragAcceptBehavior Description="{Binding Description}" />
+                                <b:AccountDragAcceptBehavior AccountDescription="{Binding AccountsDescription}" />
                                 <b:ListBoxScrollBehavior Target="{Binding CurrentAccount, Mode=OneWay}" />
                             </i:Interaction.Behaviors>
                             <ListBox.ItemContainerStyle>
@@ -285,6 +314,14 @@
                             </ListBox.ItemTemplate>
                             <ListBox.ContextMenu>
                                 <ContextMenu>
+                                    <MenuItem
+                                        Command="{Binding EditCommand}"
+                                        CommandParameter="{Binding CurrentAccount.Value, Mode=TwoWay}"
+                                        Header="修正">
+                                        <MenuItem.Icon>
+                                            <materialDesign:PackIcon Kind="AccountEdit" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
                                     <MenuItem
                                         Command="{Binding DeleteCommand}"
                                         CommandParameter="{Binding CurrentAccount.Value}"
@@ -312,7 +349,6 @@
                     VerticalAlignment="Bottom"
                     Command="{Binding AddCommand}"
                     FontSize="20"
-                    Foreground="White"
                     Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}">
                     <materialDesign:PackIcon
                         Width="24"
@@ -322,76 +358,132 @@
                 <Grid
                     Grid.Row="1"
                     Grid.Column="1"
-                    Margin="0,10,0,0"
-                    IsEnabled="{Binding IsEditable.Value}">
-                    <TextBox
-                        Height="40"
-                        Margin="20,25,95,0"
-                        VerticalAlignment="Top"
-                        co:FocusExtension.IsFocused="{Binding IsTitleFocused.Value, Mode=TwoWay}"
-                        materialDesign:HintAssist.Hint="タイトル"
-                        materialDesign:HintAssist.IsFloating="True"
-                        FontSize="16"
-                        Text="{Binding CurrentAccount.Value.Title, UpdateSourceTrigger=PropertyChanged}"
-                        TextWrapping="NoWrap">
-                        <i:Interaction.Behaviors>
-                            <!--<b:TextBoxBehavior x:Name="textBoxBehavior" />-->
-                        </i:Interaction.Behaviors>
-                    </TextBox>
-                    <TextBox
-                        Height="40"
-                        Margin="20,90,95,0"
-                        VerticalAlignment="Top"
-                        materialDesign:HintAssist.Hint="ＩＤ"
-                        materialDesign:HintAssist.IsFloating="True"
-                        FontSize="16"
-                        Text="{Binding CurrentAccount.Value.ID, UpdateSourceTrigger=PropertyChanged}"
-                        TextWrapping="NoWrap" />
-                    <PasswordBox
-                        x:Name="textBoxPassword"
-                        Height="40"
-                        Margin="20,155,95,0"
-                        VerticalAlignment="Top"
-                        materialDesign:HintAssist.Hint="パスワード"
-                        FontSize="16"
-                        Style="{StaticResource MaterialDesignFloatingHintPasswordBox}">
-                        <i:Interaction.Behaviors>
-                            <livet:PasswordBoxBindingSupportBehavior Password="{Binding CurrentAccount.Value.Password, UpdateSourceTrigger=PropertyChanged}" />
-                        </i:Interaction.Behaviors>
-                    </PasswordBox>
-                    <TextBox
-                        Height="40"
-                        Margin="20,220,95,0"
-                        VerticalAlignment="Top"
-                        materialDesign:HintAssist.Hint="メールアドレス"
-                        materialDesign:HintAssist.IsFloating="True"
-                        FontSize="16"
-                        Text="{Binding CurrentAccount.Value.Mail, UpdateSourceTrigger=PropertyChanged}"
-                        TextWrapping="NoWrap" />
-                    <TextBox
-                        Height="40"
-                        Margin="20,285,95,0"
-                        VerticalAlignment="Top"
-                        materialDesign:HintAssist.Hint="ＵＲＬ"
-                        materialDesign:HintAssist.IsFloating="True"
-                        FontSize="16"
-                        Text="{Binding CurrentAccount.Value.URL, UpdateSourceTrigger=PropertyChanged}"
-                        TextWrapping="NoWrap" />
-                    <ComboBox
-                        Height="45"
-                        Margin="20,350,95,0"
-                        VerticalAlignment="Top"
-                        materialDesign:HintAssist.Hint="カテゴリ"
-                        FontSize="16"
-                        ItemsSource="{Binding Categories.Value}"
-                        SelectedIndex="{Binding CurrentAccount.Value.CategoryID}"
-                        Style="{StaticResource MaterialDesignFloatingHintComboBox}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate DataType="domain:Category">
-                                <TextBlock Margin="0,0,0,0" Text="{Binding Name}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
+                    Margin="0,10,0,0">
+                    <Grid Grid.Row="1" Grid.Column="1">
+                        <TextBox
+                            Height="40"
+                            Margin="20,25,95,0"
+                            VerticalAlignment="Top"
+                            co:FocusExtension.IsFocused="{Binding IsTitleFocused.Value, Mode=TwoWay}"
+                            materialDesign:HintAssist.Hint="タイトル"
+                            materialDesign:HintAssist.IsFloating="True"
+                            FontSize="16"
+                            IsHitTestVisible="{Binding IsEditable.Value}"
+                            IsReadOnly="{Binding IsEditable.Value, Converter={StaticResource BoolNegativeConverter}}"
+                            IsTabStop="{Binding IsEditable.Value}"
+                            Text="{Binding CurrentAccount.Value.Title, UpdateSourceTrigger=PropertyChanged}"
+                            TextWrapping="NoWrap">
+                            <i:Interaction.Behaviors>
+                                <!--<b:TextBoxBehavior x:Name="textBoxBehavior" />-->
+                            </i:Interaction.Behaviors>
+                        </TextBox>
+                        <TextBox
+                            Height="40"
+                            Margin="20,90,95,0"
+                            VerticalAlignment="Top"
+                            materialDesign:HintAssist.Hint="ＩＤ"
+                            materialDesign:HintAssist.IsFloating="True"
+                            FontSize="16"
+                            IsHitTestVisible="{Binding IsEditable.Value}"
+                            IsReadOnly="{Binding IsEditable.Value, Converter={StaticResource BoolNegativeConverter}}"
+                            IsTabStop="{Binding IsEditable.Value}"
+                            Text="{Binding CurrentAccount.Value.ID, UpdateSourceTrigger=PropertyChanged}"
+                            TextWrapping="NoWrap" />
+                        <PasswordBox
+                            x:Name="textBoxPassword"
+                            Height="40"
+                            Margin="20,155,95,0"
+                            VerticalAlignment="Top"
+                            materialDesign:HintAssist.Hint="パスワード"
+                            FontSize="16"
+                            IsHitTestVisible="{Binding IsEditable.Value}"
+                            IsTabStop="{Binding IsEditable.Value}"
+                            Style="{StaticResource MaterialDesignFloatingHintPasswordBox}">
+                            <i:Interaction.Behaviors>
+                                <livet:PasswordBoxBindingSupportBehavior Password="{Binding CurrentAccount.Value.Password, UpdateSourceTrigger=PropertyChanged}" />
+                                <b:ReadOnlyPasswordBoxBehavior IsReadOnly="{Binding IsEditable.Value, Converter={StaticResource BoolNegativeConverter}}" />
+                            </i:Interaction.Behaviors>
+                        </PasswordBox>
+                        <TextBox
+                            Height="40"
+                            Margin="20,220,95,0"
+                            VerticalAlignment="Top"
+                            materialDesign:HintAssist.Hint="メールアドレス"
+                            materialDesign:HintAssist.IsFloating="True"
+                            FontSize="16"
+                            IsHitTestVisible="{Binding IsEditable.Value}"
+                            IsReadOnly="{Binding IsEditable.Value, Converter={StaticResource BoolNegativeConverter}}"
+                            IsTabStop="{Binding IsEditable.Value}"
+                            Text="{Binding CurrentAccount.Value.Mail, UpdateSourceTrigger=PropertyChanged}"
+                            TextWrapping="NoWrap" />
+                        <TextBox
+                            Height="40"
+                            Margin="20,285,95,0"
+                            VerticalAlignment="Top"
+                            materialDesign:HintAssist.Hint="ＵＲＬ"
+                            materialDesign:HintAssist.IsFloating="True"
+                            FontSize="16"
+                            IsHitTestVisible="{Binding IsEditable.Value}"
+                            IsReadOnly="{Binding IsEditable.Value, Converter={StaticResource BoolNegativeConverter}}"
+                            IsTabStop="{Binding IsEditable.Value}"
+                            Text="{Binding CurrentAccount.Value.URL, UpdateSourceTrigger=PropertyChanged}"
+                            TextWrapping="NoWrap" />
+                        <ComboBox
+                            Height="45"
+                            Margin="20,350,95,0"
+                            VerticalAlignment="Top"
+                            materialDesign:HintAssist.Hint="カテゴリ"
+                            FontSize="16"
+                            IsHitTestVisible="{Binding IsEditable.Value}"
+                            IsReadOnly="{Binding IsEditable.Value, Converter={StaticResource BoolNegativeConverter}}"
+                            IsTabStop="{Binding IsEditable.Value}"
+                            ItemsSource="{Binding CategoriesForAccount.Value}"
+                            SelectedValue="{Binding CurrentAccount.Value.CategoryID, Mode=TwoWay}"
+                            SelectedValuePath="ID"
+                            Style="{StaticResource MaterialDesignFloatingHintComboBox}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate DataType="domain:Category">
+                                    <TextBlock Margin="0,0,0,0" Text="{Binding Name2}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button
+                            x:Name="buttonOK"
+                            Width="110"
+                            Height="32"
+                            Margin="0,0,125,10"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Command="{Binding SaveCommand}"
+                            Style="{StaticResource MaterialDesignFlatAccentButton}"
+                            Visibility="{Binding IsEditable.Value, Converter={StaticResource BoolVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon
+                                    Width="24"
+                                    Height="24"
+                                    Kind="Check" />
+                                <TextBlock VerticalAlignment="Center" Text="保存" />
+                            </StackPanel>
+                        </Button>
+                        <Button
+                            x:Name="buttonCancel"
+                            Width="110"
+                            Height="32"
+                            Margin="0,0,10,10"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Command="{Binding CancelCommand}"
+                            Style="{StaticResource MaterialDesignFlatAccentButton}"
+                            Visibility="{Binding IsEditable.Value, Converter={StaticResource BoolVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon
+                                    Width="24"
+                                    Height="24"
+                                    Kind="Cancel" />
+                                <TextBlock VerticalAlignment="Center" Text="キャンセル" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
                     <Button
                         x:Name="buttonCopy2"
                         Width="35"

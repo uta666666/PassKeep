@@ -14,6 +14,8 @@ namespace PassKeep.Material.Common
     {
         Confirm = 1,
 
-        Edit = 2
+        Add = 2,
+
+        Modify = 3
     }
 }

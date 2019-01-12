@@ -8,7 +8,7 @@ using System.Windows;
 
 namespace PassKeep.Material.Model
 {
-    public sealed class DragAcceptDescription
+    public sealed class DragAcceptDescription<T>
     {
         public event Action<DragEventArgs> DragOver;
 
@@ -17,9 +17,9 @@ namespace PassKeep.Material.Model
             DragOver?.Invoke(dragEventArgs);
         }
 
-        public event Action<DragControlEventArgs> DragDrop;
+        public event Action<DragControlEventArgs<T>> DragDrop;
 
-        public void OnDrop(DragControlEventArgs dragEventArgs)
+        public void OnDrop(DragControlEventArgs<T> dragEventArgs)
         {
             DragDrop?.Invoke(dragEventArgs);
         }

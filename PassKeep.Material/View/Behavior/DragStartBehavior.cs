@@ -77,13 +77,13 @@ namespace PassKeep.Material.View.Behavior
             private bool _isButtonDown;
             private DragGhost _dragGhost;
 
-            private Account _src;
+            private object _src;
 
             public void OnMouseDown(UIElement uie, MouseButtonEventArgs e)
             {
                 _origin = e.GetPosition(uie);
 
-                _src = (uie as ListBoxItem)?.DataContext as Account;
+                _src = (uie as ListBoxItem)?.DataContext;
                 
                 _isButtonDown = true;
 

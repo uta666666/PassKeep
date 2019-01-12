@@ -1,25 +1,27 @@
-﻿using System;
+﻿using MahApps.Metro.Controls.Dialogs;
+using PassKeep.Material.Common;
+using Reactive.Bindings;
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using PassKeep.Material.Common;
-using System.Threading;
-using Reactive.Bindings;
-using System.ComponentModel;
-using System.Collections;
-using MahApps.Metro.Controls.Dialogs;
 
-namespace PassKeep.Material.ViewModel {
+namespace PassKeep.Material.ViewModel
+{
     public class LogInViewModel : Livet.ViewModel, INotifyDataErrorInfo
     {
-        public LogInViewModel() {
+        public LogInViewModel()
+        {
             InitializeProperty();
 
             if (LicenseManager.UsageMode != LicenseUsageMode.Designtime)
@@ -28,50 +30,82 @@ namespace PassKeep.Material.ViewModel {
                 new ThemeHelper().SetLightDark(isDark);
             }
 
-            if (!File.Exists("passkeep")) {
+            if (!File.Exists("passkeep") && !File.Exists("passkeep2"))
+            {
                 ConfirmPasswordVisibility.Value = Visibility.Visible;
                 Message.Value = "パスワードを登録してください" + Environment.NewLine + "パスワードを忘れると復元不可能です";
-            } else {
+            }
+            else
+            {
                 ConfirmPasswordVisibility.Value = Visibility.Hidden;
                 Message.Value = string.Empty;
             }
 
             LogInCommand = new ReactiveCommand<Window>();
-            LogInCommand.Subscribe((w) => {
-                if (string.IsNullOrEmpty(Password)) {
+            LogInCommand.Subscribe((w) =>
+            {
+                if (string.IsNullOrEmpty(Password))
+                {
                     return;
                 }
 
                 //ファイルがないときは初回と判断し、パスワードに関係なくログインさせる
-                if (!File.Exists("passkeep")) {
-                    if (Password == ConfirmPassword) {
+                if (!File.Exists("passkeep") && !File.Exists("passkeep2"))
+                {
+                    if (Password == ConfirmPassword)
+                    {
                         Identity.Current = Password;
                         w.DialogResult = true;
                         RemoveError(nameof(ConfirmPassword));
-                    } else {
+                    }
+                    else
+                    {
                         AddError(nameof(ConfirmPassword), "パスワードが一致しません");
                     }
                     return;
                 }
 
-                var result = FileManager.ReadWithDecrypt("passkeep", Password);
-                if (!string.IsNullOrEmpty(result)) {
-                    Identity.Current = Password;
-                    w.DialogResult = true;
-                    RemoveError(nameof(Password));
-                } else {
-                    //Message.Value = "パスワードが違います";
-                    AddError(nameof(Password), "パスワードが違います");
+                if (File.Exists("passkeep2"))
+                {
+                    var result = FileManager.ReadWithDecrypt("passkeep2", Password);
+                    if (!string.IsNullOrEmpty(result))
+                    {
+                        Identity.Current = Password;
+                        w.DialogResult = true;
+                        RemoveError(nameof(Password));
+                    }
+                    else
+                    {
+                        //Message.Value = "パスワードが違います";
+                        AddError(nameof(Password), "パスワードが違います");
+                    }
+                }
+                else
+                {
+                    var result = FileManager.ReadWithDecrypt("passkeep", Password);
+                    if (!string.IsNullOrEmpty(result))
+                    {
+                        Identity.Current = Password;
+                        w.DialogResult = true;
+                        RemoveError(nameof(Password));
+                    }
+                    else
+                    {
+                        //Message.Value = "パスワードが違います";
+                        AddError(nameof(Password), "パスワードが違います");
+                    }
                 }
             });
 
             CloseWindowCommand = new ReactiveCommand<Window>();
-            CloseWindowCommand.Subscribe((w) => {
+            CloseWindowCommand.Subscribe((w) =>
+            {
                 SystemCommands.CloseWindow(w);
             });
 
             MinimizeWindowCommand = new ReactiveCommand<Window>();
-            MinimizeWindowCommand.Subscribe((w) => {
+            MinimizeWindowCommand.Subscribe((w) =>
+            {
                 SystemCommands.MinimizeWindow(w);
             });
         }
@@ -102,7 +136,7 @@ namespace PassKeep.Material.ViewModel {
         private void OnErrorsChanged(string propertyName)
         {
             ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
-        }        
+        }
 
         public IEnumerable GetErrors(string propertyName)
         {

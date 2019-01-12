@@ -8,7 +8,14 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace PassKeep.Material.Common {
+
     public class FileManager {
+        /// <summary>
+        /// 暗号化してファイルに保存
+        /// </summary>
+        /// <param name="outFilePath"></param>
+        /// <param name="password"></param>
+        /// <param name="sourceString"></param>
         public static void WriteWithEncrypt(string outFilePath, string password, string sourceString) {
             //AesCryptoServiceProviderオブジェクトの作成
             //AesCryptoServiceProvider aes = new AesCryptoServiceProvider();
@@ -49,6 +56,12 @@ namespace PassKeep.Material.Common {
             }
         }
 
+        /// <summary>
+        /// ファイルを複合化して読み込む
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
         public static string ReadWithDecrypt(string filePath, string password) {
             try {
                 int len;
@@ -108,6 +121,17 @@ namespace PassKeep.Material.Common {
             } catch (Exception) {
                 return string.Empty;
             }
+        }
+
+        public static void ZipCompress(string srcDirectoryPath, string destFilePath) {
+            if (File.Exists(destFilePath)) {
+                File.Delete(destFilePath);
+            }
+            ZipFile.CreateFromDirectory(srcDirectoryPath, destFilePath, CompressionLevel.Fastest, false);
+        }
+
+        public static void ZipDecompress(string srcArchiveFile, string destDirectoryPath) {
+            ZipFile.ExtractToDirectory(srcArchiveFile, destDirectoryPath);
         }
     }
 }

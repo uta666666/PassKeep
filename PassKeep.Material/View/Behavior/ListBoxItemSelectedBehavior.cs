@@ -53,7 +53,7 @@ namespace PassKeep.Material.View.Behavior
 
         private void AssociatedObject_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if ((Common.EditMode)EditMode != Common.EditMode.Edit)
+            if ((Common.EditMode)EditMode != Common.EditMode.Add && (Common.EditMode)EditMode != Common.EditMode.Modify)
             {
                 return;
             }

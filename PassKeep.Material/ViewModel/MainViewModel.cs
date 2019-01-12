@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using PassKeep.Material.Common;
 using PassKeep.Material.Model;
 using Reactive.Bindings;
+using Reactive.Bindings.Extensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -16,6 +17,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Media;
 
 namespace PassKeep.Material.ViewModel
@@ -27,6 +29,16 @@ namespace PassKeep.Material.ViewModel
             //Property初期化
             InitializeProperty();
 
+            //MahAppDialog設定
+            var s = new MetroDialogSettings()
+            {
+                AffirmativeButtonText = "はい",
+                NegativeButtonText = "いいえ",
+                FirstAuxiliaryButtonText = "キャンセル",
+                DialogTitleFontSize = 20,
+                DialogResultOnCancel = MessageDialogResult.FirstAuxiliary
+            };
+
             //追加
             AddCommand = new ReactiveCommand();
             AddCommand.Subscribe(() =>
@@ -35,10 +47,19 @@ namespace PassKeep.Material.ViewModel
                 {
                     Accounts = new ReactiveProperty<AccountList>(new AccountList());
                 }
-                var newAccount = new Account() { Title = "New Item", CategoryID = CurrentCategory.Value.ID };
+                var newAccount = new Account() { Title = "New Item", CategoryID = CurrentCategory.Value.ID, IsEdit = true };
                 Accounts.Value.Add(newAccount);
 
                 CurrentAccount.Value = newAccount;
+                IsTitleFocused.Value = true;
+            });
+
+            //修正
+            EditCommand = new ReactiveCommand<Account>();
+            EditCommand.Subscribe(a =>
+            {
+                //a.IsEdit = true;
+                IsEditable.Value = true;
                 IsTitleFocused.Value = true;
             });
 
@@ -53,17 +74,44 @@ namespace PassKeep.Material.ViewModel
             SaveCommand = new ReactiveCommand();
             SaveCommand.Subscribe(() =>
             {
-                var jsonStr = JsonConvert.SerializeObject(Accounts.Value);
-                FileManager.WriteWithEncrypt("passkeep", Password, jsonStr);
+                IsEditable.Value = false;
 
-                var catJsonStr = JsonConvert.SerializeObject(Categories.Value.Where(n => n.ID != 0));
-                FileManager.WriteWithEncrypt("categories", Password, catJsonStr);
+                foreach (var c in Accounts.Value)
+                {
+                    c.IsEdit = false;
+                }
+                //var jsonStr = JsonConvert.SerializeObject(Accounts.Value);
+                //FileManager.WriteWithEncrypt("passkeep", Password, jsonStr);
+
+                int order = 1;
+                foreach (var c in Categories.Value)
+                {
+                    c.IsEdit = false;
+                    c.Order = order++;
+                }
+                //var catJsonStr = JsonConvert.SerializeObject(Categories.Value);
+                //FileManager.WriteWithEncrypt("categories", Password, catJsonStr);
+
+                var jsonStr = JsonConvert.SerializeObject(new PassKeepData { Accounts = Accounts.Value, Categories = Categories.Value });
+                FileManager.WriteWithEncrypt("passkeep", Password, jsonStr);
 
                 Accounts.Value.CopyTo(_accountsBackup);
                 Categories.Value.CopyTo(_categoriesBackup);
                 HasChanges.Value = false;
 
+                CollectionViewSource.GetDefaultView(Accounts.Value).Refresh();
                 Task.Factory.StartNew(() => MessageQueue.Enqueue("保存しました。"));
+            });
+
+            //キャンセル
+            CancelCommand = new ReactiveCommand();
+            CancelCommand.Subscribe(() =>
+            {
+                IsEditable.Value = false;
+                var currentIndex = Accounts.Value.Select((data, index) => new { data, index }).FirstOrDefault(n => n.data == CurrentAccount?.Value)?.index ?? -1;
+                _accountsBackup.CopyTo(Accounts.Value);
+
+                CurrentAccount.Value = Accounts.Value.Where((data, index) => index == currentIndex).FirstOrDefault() ?? Accounts.Value.First();
             });
 
             //クリップボードにコピー
@@ -96,31 +144,25 @@ namespace PassKeep.Material.ViewModel
 
             //
             ShowDialogMahappsCommand = new ReactiveCommand();
-            var s = new MetroDialogSettings()
-            {
-                AffirmativeButtonText = "はい",
-                NegativeButtonText = "いいえ",
-                FirstAuxiliaryButtonText = "キャンセル",
-                DialogTitleFontSize = 20,
-                DialogResultOnCancel = MessageDialogResult.FirstAuxiliary
-            };
-            ShowDialogMahappsCommand.Subscribe(async w =>
+            ShowDialogMahappsCommand.Subscribe((w) =>
             {
                 HasChanges.Value = false;
 
                 if (IsLogout) return;
 
-                var result = await MahAppsDialogCoordinator.ShowMessageAsync(this, "保存されていない変更があります。", "保存しますか？", MessageDialogStyle.AffirmativeAndNegativeAndSingleAuxiliary, s);
-                if (result == MessageDialogResult.Affirmative)
-                {
-                    SaveCommand.Execute();
-                }
-                else if (result == MessageDialogResult.FirstAuxiliary)
-                {
-                    HasChanges.Value = true;
-                    return;
-                }
-                (w as MahApps.Metro.Controls.MetroWindow)?.Close();
+                //var result = await MahAppsDialogCoordinator.ShowMessageAsync(this, "保存されていない変更があります。", "保存しますか？", MessageDialogStyle.AffirmativeAndNegativeAndSingleAuxiliary, s);
+                //if (result == MessageDialogResult.Affirmative)
+                //{
+                //    SaveCommand.Execute();
+                //}
+                //else if (result == MessageDialogResult.FirstAuxiliary)
+                //{
+                //    HasChanges.Value = true;
+                //    return;
+                //}
+                SaveCommand.Execute();
+
+                //(w as MahApps.Metro.Controls.MetroWindow)?.Close();
             });
 
 
@@ -134,49 +176,31 @@ namespace PassKeep.Material.ViewModel
 
             //ログアウト
             LogoutCommand = new ReactiveCommand<MahApps.Metro.Controls.MetroWindow>();
-            LogoutCommand.Subscribe(async (w) =>
+            LogoutCommand.Subscribe((w) =>
             {
                 if (HasChanges.Value)
                 {
-                    var result = await MahAppsDialogCoordinator.ShowMessageAsync(this, "保存されていない変更があります。", "保存しますか？", MessageDialogStyle.AffirmativeAndNegative, s);
-                    if (result == MessageDialogResult.Affirmative)
-                    {
-                        SaveCommand.Execute();
-                    }
-                    else
-                    {
-                        _accountsBackup.CopyTo(Accounts.Value);
-                        _categoriesBackup.CopyTo(Categories.Value);
-                    }
+                    //var result = await MahAppsDialogCoordinator.ShowMessageAsync(this, "保存されていない変更があります。", "保存しますか？", MessageDialogStyle.AffirmativeAndNegative, s);
+                    //if (result == MessageDialogResult.Affirmative)
+                    //{
+                    //    SaveCommand.Execute();
+                    //}
+                    //else
+                    //{
+                    //    _accountsBackup.CopyTo(Accounts.Value);
+                    //    _categoriesBackup.CopyTo(Categories.Value);
+                    //}
+                    SaveCommand.Execute();
                     HasChanges.Value = false;
                 }
+                else
+                {
+                    CancelCommand.Execute();
+                }
+                IsDispSidePanel.Value = false;
+
                 IsLogout = true;
                 w.Close();
-            });
-
-            //最小化
-            MinimizeWindowCommand = new ReactiveCommand<Window>();
-            MinimizeWindowCommand.Subscribe((w) =>
-            {
-                SystemCommands.MinimizeWindow(w);
-            });
-
-            //復元
-            RestoreWindowCommand = new ReactiveCommand<Window>();
-            RestoreWindowCommand.Subscribe((w) =>
-            {
-                SystemCommands.RestoreWindow(w);
-                VisibilityForMaximize.Value = Visibility.Visible;
-                VisibilityForRestore.Value = Visibility.Collapsed;
-            });
-
-            //最大化
-            MaximizeWindowCommand = new ReactiveCommand<Window>();
-            MaximizeWindowCommand.Subscribe((w) =>
-            {
-                SystemCommands.MaximizeWindow(w);
-                VisibilityForMaximize.Value = Visibility.Collapsed;
-                VisibilityForRestore.Value = Visibility.Visible;
             });
 
             //パスワード変更画面を開く
@@ -192,6 +216,9 @@ namespace PassKeep.Material.ViewModel
                     var jsonStr = JsonConvert.SerializeObject(Accounts.Value);
                     FileManager.WriteWithEncrypt("passkeep", Password, jsonStr);
 
+                    var catJsonStr = JsonConvert.SerializeObject(Categories.Value);
+                    FileManager.WriteWithEncrypt("categories", Password, catJsonStr);
+
                     await Task.Factory.StartNew(() => MessageQueue.Enqueue("パスワードを変更しました。"));
                 }
             });
@@ -200,49 +227,61 @@ namespace PassKeep.Material.ViewModel
             AddCategoryCommand = new ReactiveCommand();
             AddCategoryCommand.Subscribe(() =>
             {
-                if ((EditMode)CategoryEditMode.Value == EditMode.Edit)
-                {
-                    foreach (var cat in Categories.Value)
-                    {
-                        cat.IsEdit = false;
-                    }
-                    CategoryButtonText.Value = "Add Category";
-                    CategoryEditMode.Value = (int)EditMode.Confirm;
-                }
-                else
-                {
-                    var maxId = Categories.Value.Max(n => n.ID);
-                    var category = new Category() { ID = maxId + 1, Name = $"category{maxId + 1}", IsEdit = true };
-                    Categories.Value.Add(category);
-                    CurrentCategory.Value = category;
+                //確認モード→追加モード
+                var maxId = Categories.Value.Max(n => n.ID);
+                var category = new Category() { ID = maxId + 1, Name = $"category{maxId + 1}", Name2 = $"category{maxId + 1}", IsEdit = true };
+                Categories.Value.Add(category);
+                CurrentCategory.Value = category;
 
-                    CategoryButtonText.Value = "OK";
-                    CategoryEditMode.Value = (int)EditMode.Edit;
-                }
+                CategoryButtonText.Value = "OK";
+                CategoryEditMode.Value = (int)EditMode.Add;
+
+                //TODO
+                CategoriesForAccount.Value.Add(category);
             });
 
+            //カテゴリ保存
+            SaveCategoryCommand = new ReactiveCommand();
+            SaveCategoryCommand.Subscribe(() =>
+            {
+                //追加モード→確認モード
+                //修正モード→確認モード
+                //TODO
+                if ((EditMode)CategoryEditMode.Value == EditMode.Modify)
+                {
+                    var cat = Categories.Value.First(n => n.IsEdit);
+                    var destRow = CategoriesForAccount.Value.FirstOrDefault(c => c.ID == cat.ID);
+                    if (destRow != null)
+                    {
+                        destRow.Name = cat.Name;
+                    }
+                }
+
+                foreach (var cat in Categories.Value)
+                {
+                    cat.IsEdit = false;
+                }
+
+                CategoryButtonText.Value = "Add Category";
+                CategoryEditMode.Value = (int)EditMode.Confirm;
+
+                SaveCommand.Execute();
+
+                HasChanges.Value = false;
+            });
+
+            //カテゴリ名変更
             ChangeCategoryNameCommand = new ReactiveCommand<Category>();
             ChangeCategoryNameCommand.Subscribe(n =>
             {
-                if ((EditMode)CategoryEditMode.Value == EditMode.Edit)
-                {
-                    foreach (var cat in Categories.Value)
-                    {
-                        cat.IsEdit = false;
-                    }
-                    CategoryButtonText.Value = "Add Category";
-                    CategoryEditMode.Value = (int)EditMode.Confirm;
-                }
-                else
-                {
-                    n.IsEdit = true;
-                    CurrentCategory.Value = n;
+                n.IsEdit = true;
+                CurrentCategory.Value = n;
 
-                    CategoryButtonText.Value = "OK";
-                    CategoryEditMode.Value = (int)EditMode.Edit;
-                }
+                CategoryButtonText.Value = "OK";
+                CategoryEditMode.Value = (int)EditMode.Modify;
             });
 
+            //カテゴリ削除
             DeleteCategoryCommand = new ReactiveCommand<Category>();
             DeleteCategoryCommand.Subscribe(async n =>
             {
@@ -252,20 +291,21 @@ namespace PassKeep.Material.ViewModel
                     return;
                 }
 
-                var result = await MahAppsDialogCoordinator.ShowMessageAsync(this, "カテゴリ内のアカウントも削除しますか？", "削除しない場合はALLに表示されます。", MessageDialogStyle.AffirmativeAndNegativeAndSingleAuxiliary, s);
+                MessageDialogResult result = MessageDialogResult.Canceled;
+                if (Accounts.Value.Any(a => a.CategoryID == n.ID))
+                {
+                    result = await MahAppsDialogCoordinator.ShowMessageAsync(this, "カテゴリ内のアカウントも削除しますか？", "削除しない場合はALLに表示されます。", MessageDialogStyle.AffirmativeAndNegativeAndSingleAuxiliary, s);
+                }
                 if (result == MessageDialogResult.FirstAuxiliary) return;
 
                 if (result == MessageDialogResult.Affirmative)
                 {
-                    for (int i = Accounts.Value.Count - 1; i >= 0; i--)
+                    foreach (var act in Accounts.Value.Where(a => a.CategoryID == n.ID))
                     {
-                        if (Accounts.Value[i].CategoryID == n.ID)
-                        {
-                            Accounts.Value.RemoveAt(i);
-                        }
+                        Accounts.Value.Remove(act);
                     }
                 }
-                else
+                else if (result == MessageDialogResult.Negative)
                 {
                     foreach (var a in Accounts.Value.Where(a => a.CategoryID == n.ID))
                     {
@@ -274,6 +314,15 @@ namespace PassKeep.Material.ViewModel
                 }
                 Categories.Value.Remove(n);
                 CurrentCategory.Value = Categories.Value.First();
+
+                HasChanges.Value = false;
+                await Task.Factory.StartNew(() => MessageQueue.Enqueue("削除しました。"));
+            });
+
+            CancelEditCategoryCommand = new ReactiveCommand();
+            CancelEditCategoryCommand.Subscribe(() =>
+            {
+                IsDispSidePanel.Value = false;
             });
         }
 
@@ -283,11 +332,9 @@ namespace PassKeep.Material.ViewModel
         private void InitializeProperty()
         {
             CurrentAccount = new ReactiveProperty<Account>();
-            VisibilityForMaximize = new ReactiveProperty<Visibility>(Visibility.Visible);
-            VisibilityForRestore = new ReactiveProperty<Visibility>(Visibility.Visible);
             DialogVM = new ReactiveProperty<Livet.ViewModel>();
             IsDialogOpen = new ReactiveProperty<bool>(false);
-            IsEditable = CurrentAccount.Select(n => n != null).ToReactiveProperty(); //Accounts.Select(n => (n?.Count ?? 0) > 0).ToReactiveProperty();
+            IsEditable = CurrentAccount.Select(n => n != null && n.IsEdit).ToReactiveProperty(); //Accounts.Select(n => (n?.Count ?? 0) > 0).ToReactiveProperty();
             IsDark = new ReactiveProperty<bool>(Properties.Settings.Default.IsDark);
             HasChanges = new ReactiveProperty<bool>(false);
             TitleBrush = new ReactiveProperty<SolidColorBrush>();
@@ -300,7 +347,9 @@ namespace PassKeep.Material.ViewModel
             CategoryEditMode = new ReactiveProperty<int>((int)EditMode.Confirm);
 
             //ドラッグでの並べ替え対応
-            Description = CreateDragAcceptDescription();
+            AccountsDescription = CreateAccountDragAcceptDescription();
+
+            CategoriesDescription = CreateCategoryDragAcceptDescription();
 
             //設定読み込みとか
             Password = Identity.Current;
@@ -308,6 +357,13 @@ namespace PassKeep.Material.ViewModel
 
             Categories = new ReactiveProperty<CategoryList>(CreateCategoryList());
             CurrentCategory = new ReactiveProperty<Category>(Categories.Value[0]);
+
+            CategoriesForAccount = new ReactiveProperty<CategoryList>(new CategoryList(Categories.Value.OrderByDescending(n => n.ID))); //default(ReactiveCollection<Category>);
+            //CategoriesForAccount = Categories.Value.ToObservable().ToReactiveCollection();
+            var collectionView = CollectionViewSource.GetDefaultView(CategoriesForAccount.Value);
+            //collectionView.SortDescriptions.Clear();
+            //collectionView.SortDescriptions.Add(new SortDescription("ID", ListSortDirection.Ascending));
+            collectionView.Filter = x => ((Category)x).ID != 0;
 
             //プロパティの変更を購読する
             Subscribe();
@@ -354,7 +410,7 @@ namespace PassKeep.Material.ViewModel
             {
                 if (n) return;
 
-                if ((EditMode)CategoryEditMode.Value == EditMode.Edit)
+                if ((EditMode)CategoryEditMode.Value == EditMode.Add)
                 {
                     //変更中のものは破棄する
                     var targets = Categories.Value.Where(c => c.IsEdit).ToList();
@@ -362,6 +418,17 @@ namespace PassKeep.Material.ViewModel
                     {
                         var target = targets[i];
                         Categories.Value.Remove(target);
+                    }
+                    CategoryButtonText.Value = "Add Category";
+                    CategoryEditMode.Value = (int)EditMode.Confirm;
+
+                    CurrentCategory.Value = Categories.Value.First();
+                }
+                else if ((EditMode)CategoryEditMode.Value == EditMode.Modify)
+                {
+                    foreach (var c in Categories.Value.Where(c => c.IsEdit))
+                    {
+                        c.IsEdit = false;
                     }
                     CategoryButtonText.Value = "Add Category";
                     CategoryEditMode.Value = (int)EditMode.Confirm;
@@ -373,9 +440,9 @@ namespace PassKeep.Material.ViewModel
         /// ListBoxの並び替え用コントロール作成
         /// </summary>
         /// <returns></returns>
-        private DragAcceptDescription CreateDragAcceptDescription()
+        private DragAcceptDescription<Account> CreateAccountDragAcceptDescription()
         {
-            var description = new DragAcceptDescription();
+            var description = new DragAcceptDescription<Account>();
             description.DragOver += (e) =>
             {
                 if (e.AllowedEffects.HasFlag(e.Effects))
@@ -395,17 +462,48 @@ namespace PassKeep.Material.ViewModel
             return description;
         }
 
+        private DragAcceptDescription<Category> CreateCategoryDragAcceptDescription()
+        {
+            var description = new DragAcceptDescription<Category>();
+            description.DragOver += (e) =>
+            {
+                if (e.AllowedEffects.HasFlag(e.Effects))
+                {
+                    if (e.Data.GetDataPresent(typeof(Category)))
+                    {
+                        return;
+                    }
+                }
+                e.Effects = DragDropEffects.None;
+            };
+            description.DragDrop += (e) =>
+            {
+                var oldIndex = Categories.Value.Select((data, index) => new { Index = index, Data = data }).Where(n => n.Data == e.MovingData).Select(n => n.Index).First();
+                Categories.Value.Move(oldIndex, e.NewIndex);
+            };
+            return description;
+        }
+
         /// <summary>
         /// データ読み込み
         /// </summary>
         /// <returns></returns>
         private AccountList CreateAccountList()
         {
+            const string FILENAME = "passkeep";
             var accounts = new AccountList();
-            if (File.Exists("passkeep"))
+            if (File.Exists(FILENAME))
             {
-                var decryptStr = FileManager.ReadWithDecrypt("passkeep", Password);
-                accounts = JsonConvert.DeserializeObject<AccountList>(decryptStr);
+                var decryptStr = FileManager.ReadWithDecrypt(FILENAME, Password);
+                try
+                {
+                    accounts = AccountList.MakeList(decryptStr);
+                }
+                catch
+                {
+                    var data = PassKeepData.MakeData(decryptStr);
+                    accounts = data.Accounts;
+                }
                 accounts.CopyTo(_accountsBackup);
             }
             //各要素に対してイベントハンドラをセット
@@ -424,13 +522,27 @@ namespace PassKeep.Material.ViewModel
         /// <returns></returns>
         private CategoryList CreateCategoryList()
         {
-            var categories = new CategoryList();
-            if (File.Exists("categories"))
+            const string FILENAME = "categories";
+            CategoryList categories = null;
+            if (File.Exists(FILENAME))
             {
-                var decryptCatStr = FileManager.ReadWithDecrypt("categories", Password);
-                categories = JsonConvert.DeserializeObject<CategoryList>(decryptCatStr);
-                categories.CopyTo(_categoriesBackup);
+                var decryptCatStr = FileManager.ReadWithDecrypt(FILENAME, Password);
+                try
+                {
+                    categories = CategoryList.MakeList(decryptCatStr);
+                }
+                catch
+                {
+                    var data = PassKeepData.MakeData(decryptCatStr);
+                    categories = data.Categories;
+                }
             }
+            else
+            {
+                categories = CategoryList.MakeList();
+            }
+            categories.CopyTo(_categoriesBackup);
+
             foreach (var cat in categories)
             {
                 cat.PropertyChanged += Cat_PropertyChanged;
@@ -520,9 +632,17 @@ namespace PassKeep.Material.ViewModel
         /// </summary>
         public ReactiveCommand<Account> DeleteCommand { get; set; }
         /// <summary>
+        /// 修正
+        /// </summary>
+        public ReactiveCommand<Account> EditCommand { get; set; }
+        /// <summary>
         /// 保存
         /// </summary>
         public ReactiveCommand SaveCommand { get; set; }
+        /// <summary>
+        /// キャンセル
+        /// </summary>
+        public ReactiveCommand CancelCommand { get; set; }
         /// <summary>
         /// クリップボードにコピー
         /// </summary>
@@ -535,18 +655,6 @@ namespace PassKeep.Material.ViewModel
         /// テーマ変更
         /// </summary>
         public ReactiveCommand<bool> ChangeLightDarkCommand { get; set; }
-        /// <summary>
-        /// 最小化
-        /// </summary>
-        public ReactiveCommand<Window> MinimizeWindowCommand { get; set; }
-        /// <summary>
-        /// 復元
-        /// </summary>
-        public ReactiveCommand<Window> RestoreWindowCommand { get; set; }
-        /// <summary>
-        /// 最大化
-        /// </summary>
-        public ReactiveCommand<Window> MaximizeWindowCommand { get; set; }
         /// <summary>
         /// 閉じる
         /// </summary>
@@ -563,10 +671,22 @@ namespace PassKeep.Material.ViewModel
         /// カテゴリーを追加する
         /// </summary>
         public ReactiveCommand AddCategoryCommand { get; set; }
-
+        /// <summary>
+        /// カテゴリ保存
+        /// </summary>
+        public ReactiveCommand SaveCategoryCommand { get; set; }
+        /// <summary>
+        /// カテゴリ名変更
+        /// </summary>
         public ReactiveCommand<Category> ChangeCategoryNameCommand { get; set; }
-
+        /// <summary>
+        /// カテゴリ削除
+        /// </summary>
         public ReactiveCommand<Category> DeleteCategoryCommand { get; set; }
+        /// <summary>
+        /// カテゴリ編集キャンセル
+        /// </summary>
+        public ReactiveCommand CancelEditCategoryCommand { get; set; }
 
 
         /// <summary>
@@ -589,14 +709,14 @@ namespace PassKeep.Material.ViewModel
         /// </summary>
         public ReactiveProperty<CategoryList> Categories { get; set; }
 
+        public ReactiveProperty<CategoryList> CategoriesForAccount { get; set; }
+        //public ReactiveCollection<Category> CategoriesForAccount { get; set; }
+        //public ReadOnlyReactiveCollection<Category> CategoriesForAccount { get; set; }
+
         /// <summary>
         /// 選択中のカテゴリ
         /// </summary>
         public ReactiveProperty<Category> CurrentCategory { get; set; }
-
-        public ReactiveProperty<Visibility> VisibilityForMaximize { get; set; }
-
-        public ReactiveProperty<Visibility> VisibilityForRestore { get; set; }
 
         public ReactiveProperty<Livet.ViewModel> DialogVM { get; set; }
 
@@ -643,9 +763,14 @@ namespace PassKeep.Material.ViewModel
         public IDialogCoordinator MahAppsDialogCoordinator { get; set; }
 
         /// <summary>
-        /// ドラッグアンドドロップでの並び替え用
+        /// ドラッグアンドドロップでの並び替え用 Account
         /// </summary>
-        public DragAcceptDescription Description { get; set; }
+        public DragAcceptDescription<Account> AccountsDescription { get; set; }
+
+        /// <summary>
+        /// ドラッグアンドドロップでの並び替え用　Category
+        /// </summary>
+        public DragAcceptDescription<Category> CategoriesDescription { get; set; }
 
 
 

@@ -38,7 +38,22 @@ namespace PassKeep.Material.Model
                 if (_name == value) return;
 
                 _name = value;
+                _name2 = value;
                 OnPropertyChanged(nameof(Name));
+                OnPropertyChanged(nameof(Name2));
+            }
+        }
+
+        private string _name2;
+        public string Name2 {
+            get {
+                return _name2;
+            }
+            set {
+                if (_name2 == value) return;
+
+                _name2 = value;
+                OnPropertyChanged(nameof(Name2));
             }
         }
 
@@ -52,6 +67,19 @@ namespace PassKeep.Material.Model
 
                 _isEdit = value;
                 OnPropertyChanged(nameof(IsEdit));
+            }
+        }
+
+        private int _order;
+        public int Order {
+            get {
+                return _order;
+            }
+            set {
+                if (_order == value) return;
+
+                _order = value;
+                OnPropertyChanged(nameof(Order));
             }
         }
     }

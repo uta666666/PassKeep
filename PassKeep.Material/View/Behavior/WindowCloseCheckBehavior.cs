@@ -23,20 +23,20 @@ namespace PassKeep.Material.View.Behavior
             }
         }
 
-        public ReactiveCommand ShowDialogCommand {
+        public ReactiveCommand SaveCommand {
             get {
-                return (ReactiveCommand)GetValue(ShowDialogCommandProperty);
+                return (ReactiveCommand)GetValue(SaveCommandProperty);
             }
             set {
-                SetValue(ShowDialogCommandProperty, value);
+                SetValue(SaveCommandProperty, value);
             }
         }
 
         public static readonly DependencyProperty HasChangesProperty
             = DependencyProperty.Register(nameof(HasChanges), typeof(bool), typeof(WindowCloseCheckBehavior), new PropertyMetadata(false));
 
-        public static readonly DependencyProperty ShowDialogCommandProperty
-            = DependencyProperty.Register(nameof(ShowDialogCommand), typeof(ReactiveCommand), typeof(WindowCloseCheckBehavior), new PropertyMetadata(null));
+        public static readonly DependencyProperty SaveCommandProperty
+            = DependencyProperty.Register(nameof(SaveCommand), typeof(ReactiveCommand), typeof(WindowCloseCheckBehavior), new PropertyMetadata(null));
 
         protected override void OnAttached()
         {
@@ -54,8 +54,8 @@ namespace PassKeep.Material.View.Behavior
         {
             if (HasChanges)
             {
-                ShowDialogCommand?.Execute(AssociatedObject);
-                e.Cancel = true;
+                //e.Cancel = true;
+                SaveCommand?.Execute(AssociatedObject);
                 return;
             }
         }

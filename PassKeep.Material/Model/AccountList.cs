@@ -4,11 +4,16 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace PassKeep.Material.Model
 {
     public class AccountList : ObservableCollection<Account>
     {
+        public static AccountList MakeList(string decryptStr) {
+            return JsonConvert.DeserializeObject<AccountList>(decryptStr);
+        }
+
         public AccountList() { }
 
         public AccountList(IEnumerable<Account> src)

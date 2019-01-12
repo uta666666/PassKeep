@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Interactivity;
 
 namespace PassKeep.Material.Common
@@ -34,12 +35,13 @@ namespace PassKeep.Material.Common
             uie.GotFocus -= FrameworkElement_GotFocus;
             uie.LostFocus -= FrameworkElement_LostFocus;
             uie.GotFocus += FrameworkElement_GotFocus;
-                uie.LostFocus += FrameworkElement_LostFocus;
+            uie.LostFocus += FrameworkElement_LostFocus;
             
 
             if ((bool)e.NewValue)
             {
                 uie.Focus();
+                (uie as TextBox)?.SelectAll();
             }
 
             //if (!fe.IsVisible)

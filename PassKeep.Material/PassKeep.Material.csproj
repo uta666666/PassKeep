@@ -71,6 +71,7 @@
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Reactive.Core, Version=3.0.3000.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Reactive.Core.3.1.1\lib\net46\System.Reactive.Core.dll</HintPath>
     </Reference>
@@ -120,19 +121,25 @@
     <Compile Include="Model\Category.cs" />
     <Compile Include="Model\CategoryList.cs" />
     <Compile Include="Model\DragAcceptDescription.cs" />
+    <Compile Include="Model\PassKeepData.cs" />
     <Compile Include="ViewModel\CategoryViewModel.cs" />
     <Compile Include="ViewModel\ChangePasswordViewModel.cs" />
     <Compile Include="ViewModel\LogInViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\MessageViewModel.cs" />
-    <Compile Include="View\Behavior\DragAcceptBehavior.cs" />
+    <Compile Include="View\Behavior\AccountDragAcceptBehavior.cs" />
+    <Compile Include="View\Behavior\CategoryDragAcceptBehavior.cs" />
     <Compile Include="View\Behavior\DragStartBehavior.cs" />
+    <Compile Include="View\Behavior\EditCategoryBehavior.cs" />
     <Compile Include="View\Behavior\ForceLogoutBehavior.cs" />
     <Compile Include="View\Behavior\ListBoxItemSelectedBehavior.cs" />
     <Compile Include="View\Behavior\ListBoxScrollBehavior.cs" />
+    <Compile Include="View\Behavior\ReadOnlyPasswordBoxBehavior.cs" />
     <Compile Include="View\Behavior\WindowCloseCheckBehavior.cs" />
     <Compile Include="View\Behavior\WindowDragMoveBehavior.cs" />
     <Compile Include="View\Behavior\WindowLoadBehavior.cs" />
+    <Compile Include="View\Converter\BoolNegativeConverter.cs" />
+    <Compile Include="View\Converter\BoolVisibilityConverter.cs" />
     <Compile Include="View\Converter\CategoryIDNameConverter.cs" />
     <Compile Include="View\CategoryNameWindow.xaml.cs">
       <DependentUpon>CategoryNameWindow.xaml</DependentUpon>
